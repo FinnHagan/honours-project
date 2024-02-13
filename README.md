@@ -1,2 +1,2 @@
-# honours-project
-# Should I Put My Washing On?
+# Honours Project
+## Should I Put My Washing On?
