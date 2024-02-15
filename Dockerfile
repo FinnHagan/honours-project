@@ -23,7 +23,7 @@ FROM nginx:alpine
 RUN rm -rf /usr/share/nginx/html/*
 
 # Copy the built Ionic React app to the nginx web server directory. Adjust the source path according to your build directory structure.
-COPY --from=build /myApp/build /usr/share/nginx/html
+COPY --from=build myApp/build /usr/share/nginx/html
 
 # Copy the NGINX config file
 COPY nginx.conf /etc/nginx/conf.d/default.conf
