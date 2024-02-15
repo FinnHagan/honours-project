@@ -16,7 +16,7 @@ const Home: React.FC = () => {
             <IonTitle size="large">Should I Put My Washing On?</IonTitle>
           </IonToolbar>
         </IonHeader>
-        Hello World!
+        Finn
         <ExploreContainer />
       </IonContent>
     </IonPage>
