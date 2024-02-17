@@ -65,7 +65,77 @@
   --ion-color-dark-shade: #1e2023;
   --ion-color-dark-tint: #383a3e;
 
+  --font-family-regular: 'Baxter-Regular', sans-serif;
+  --font-family-regular-italic: 'Baxter-RegularItalic', sans-serif;
+  --font-family-regular-sans: 'BaxterSans-Regular', sans-serif;
+  --font-family-regular-sans-italic: 'BaxterSans-RegularItalic', sans-serif;
+  --font-family-bold: 'Baxter-Bold', sans-serif;
+  --font-family-bold-sans: 'BaxterSans-Bold', sans-serif;
+  --font-family-bold-italic: 'BaxterSans-BoldItalic', sans-serif;
+  --font-family-medium: 'BaxterSans-Medium', sans-serif;
+  --font-family-medium-italic: 'BaxterSans-MediumItalic', sans-serif;
+  --font-family-semi-bold: 'BaxterSans-SemiBold', sans-serif;
+  --font-family-semi-bold-italic: 'BaxterSans-SemiBoldItalic', sans-serif;
 }
+
+.font-regular {
+  font-family: var(--font-family-regular);
+}
+
+.font-regular-sans {
+  font-family: var(--font-family-regular-sans);
+}
+
+.font-regular-italic {
+  font-family: var(--font-family-regular-italic);
+  font-style: italic;
+}
+
+.font-regular-sans-italic {
+  font-family: var(--font-family-regular-sans-italic);
+  font-style: italic;
+}
+
+.font-bold {
+  font-family: var(--font-family-bold);
+  font-weight: bold;
+}
+
+.font-bold-sans {
+  font-family: var(--font-family-bold-sans);
+  font-weight: bold;
+}
+
+.font-bold-italic {
+  font-family: var(--font-family-bold-italic);
+  font-weight: bold;
+  font-style: italic;
+}
+
+.font-medium {
+  font-family: var(--font-family-medium);
+}
+
+.font-medium-italic {
+  font-family: var(--font-family-medium-italic);
+  font-style: italic;
+}
+
+.font-semi-bold {
+  font-family: var(--font-family-semi-bold);
+  font-weight: 600;
+  /* or 700 depending on how semibold is defined in the font */
+}
+
+.font-semi-bold-italic {
+  font-family: var(--font-family-semi-bold-italic);
+  font-weight: 600;
+  /* or 700 */
+  font-style: italic;
+}
+
+/* Add other classes as necessary */
+
 
 /*
    * iOS Dark Theme
