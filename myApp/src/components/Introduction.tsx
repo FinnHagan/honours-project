@@ -14,7 +14,7 @@ interface IntroductionProps {
 
 const NextSlide = ({ children }: any) => {
     const swiper = useSwiper();
-    return <IonButton color="success" onClick={() => swiper.slideNext()}>{children}</IonButton>
+    return <IonButton className='font-bold' expand='block' shape='round' color="success" onClick={() => swiper.slideNext()}>{children}</IonButton>
 }
 
 const Introduction: React.FC<IntroductionProps> = ({ onIntroViewed }) => {
@@ -56,7 +56,7 @@ const Introduction: React.FC<IntroductionProps> = ({ onIntroViewed }) => {
                                     <h1>Should I Put My Washing On?</h1>
                                 </IonText>
                                 <img src={introImage4} alt="Introduction Slide 4" />
-                                <IonButton color="success" onClick={() => onIntroViewed()}>Take me there!</IonButton>
+                                <IonButton className='font-bold' expand='block' shape='round' color="success" onClick={() => onIntroViewed()}>Take me there!</IonButton>
                             </SwiperSlide>
                         </Swiper>
                     </IonCardContent>
