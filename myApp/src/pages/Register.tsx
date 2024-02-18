@@ -21,7 +21,7 @@ const Register: React.FC = () => {
                 </IonToolbar>
             </IonHeader>
 
-            <IonContent scrollY={false}>
+            <IonContent>
                 <IonCard>
                     <IonCardContent>
                         <form onSubmit={handleRegister}>
