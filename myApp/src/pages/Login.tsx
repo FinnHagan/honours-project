@@ -18,12 +18,12 @@ const Login: React.FC = () => {
                 </IonToolbar>
             </IonHeader>
 
-            <IonContent scrollY={false}>
+            <IonContent>
                 <IonCard>
-                    <div>
-                        <img src={loginImage} alt="Login Page"></img>
-                    </div>
                     <IonCardContent>
+                        <div>
+                            <img src={loginImage} alt="Login Page"></img>
+                        </div>
                         <form onSubmit={handleLogin}>
                             <IonInput fill="outline" labelPlacement="floating" label="Email" type="email" placeholder="uod@dundee.ac.uk" required></IonInput>
                             <IonInput className="ion-margin-top" fill="outline" labelPlacement="floating" label="Password" type="password" required></IonInput>
