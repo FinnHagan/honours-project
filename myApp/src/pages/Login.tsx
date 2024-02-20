@@ -1,12 +1,23 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { IonButton, IonCard, IonCardContent, IonContent, IonFooter, IonHeader, IonIcon, IonInput, IonItem, IonLabel, IonPage, IonTitle, IonToolbar, useIonRouter } from '@ionic/react';
-import { arrowForwardCircleOutline, personCircleOutline } from 'ionicons/icons';
+import { arrowForwardCircleOutline, personCircleOutline, reloadSharp } from 'ionicons/icons';
 import loginImage from '../assets/Login-screen-image.jpg';
 import Introduction from '../components/Introduction';
+import { Preferences } from '@capacitor/preferences';
+
+const INTRO_VIEWED = 'intro-viewed';
 
 const Login: React.FC = () => {
     const router = useIonRouter();
-    const [introViewed, setIntroViewed] = useState(false);
+    const [introViewed, setIntroViewed] = useState(true);
+
+    useEffect(() => {
+        const checkStorage = async () => {
+            const viewed = await Preferences.get({ key: INTRO_VIEWED });
+            setIntroViewed(viewed.value === 'true');
+        }
+        checkStorage();
+    }, []);
 
     const handleLogin = (event: any) => {
         event.preventDefault();
@@ -18,7 +29,13 @@ const Login: React.FC = () => {
     const introDone = () => {
         console.log('Intro viewed');
         setIntroViewed(true);
+        Preferences.set({ key: INTRO_VIEWED, value: 'true' });
     };
+
+    const watchIntroAgain = () => {
+        setIntroViewed(false);
+        Preferences.set({ key: INTRO_VIEWED, value: 'false' });
+    }
 
     return (
         <>
@@ -48,6 +65,10 @@ const Login: React.FC = () => {
                                     <IonButton className="ion-margin-top font-bold" routerLink="/register" expand="block" shape="round" color="success" >
                                         Create Account
                                         <IonIcon slot="end" icon={personCircleOutline} />
+                                    </IonButton>
+                                    <IonButton onClick={watchIntroAgain} className="ion-margin-top font-bold" expand="block" shape="round" color="danger" >
+                                        Re-Watch Introduction
+                                        <IonIcon slot="end" icon={reloadSharp} />
                                     </IonButton>
                                 </form>
                             </IonCardContent>
