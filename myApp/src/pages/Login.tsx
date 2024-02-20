@@ -22,8 +22,7 @@ const Login: React.FC = () => {
     const handleLogin = (event: any) => {
         event.preventDefault();
         console.log('Login');
-
-        // router.push('/home', 'root');
+        router.push('/app', 'root');
     };
 
     const introDone = () => {
