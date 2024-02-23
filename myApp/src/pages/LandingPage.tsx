@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { IonBackButton, IonButton, IonButtons, IonCard, IonCardContent, IonContent, IonHeader, IonInput, IonItem, IonLabel, IonPage, IonTitle, IonToolbar, IonText, IonDatetime } from '@ionic/react';
+import axios from 'axios';
 
 const LandingPage: React.FC = () => {
     const [postCode, setPostCode] = useState('');
@@ -10,7 +11,28 @@ const LandingPage: React.FC = () => {
 
     const handleSubmit = (event: any) => {
         event.preventDefault();
-        console.log('Submit');
+
+        if (!isValid) {
+            console.error('Invalid post code.');
+            return;
+        }
+
+        const data = {
+            postCode,
+            solarPanels,
+            // Add other fields as necessary
+        };
+
+        axios.post('`${process.env.REACT_APP_API_URL}/`', {
+            post_code: postCode,
+            number_of_solar_panels: solarPanels,
+        })
+            .then(response => {
+                console.log('Success:', response.data);
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
     };
 
     const handlePostCodeChange = (e: CustomEvent) => {
@@ -45,7 +67,7 @@ const LandingPage: React.FC = () => {
                         <form onSubmit={handleSubmit}>
                             <IonInput label="Number of Solar Panels" labelPlacement="floating" type="number" value={solarPanels.toString()} onIonChange={handleSolarPanelsChange} min="1" step="1" />
                             <IonInput label="Post Code" labelPlacement="floating" value={postCode} onIonChange={handlePostCodeChange} />
-                            <IonInput label="Date" labelPlacement="floating" type="date" placeholder="Date" required></IonInput>
+                            {/* <IonInput label="Date" labelPlacement="floating" type="date" placeholder="Date" required></IonInput> */}
                             <IonButton className="ion-margin-top" expand="block" type="submit" shape="round" color="success">
                                 Submit
                             </IonButton>
