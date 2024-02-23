@@ -59,6 +59,12 @@ REST_FRAMEWORK = {'DEFAULT_PERMISSION_CLASSES':[
 
 CORS_ORIGIN_ALLOW_ALL = True
 
+CORS_ALLOWED_ORIGINS = [
+    "https://uod.finnhagan.co.uk",
+    "http://localhost:8000",  # or whatever port your React app uses locally
+]
+
+
 ROOT_URLCONF = 'myProject.urls'
 
 TEMPLATES = [
