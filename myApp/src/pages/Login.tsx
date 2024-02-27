@@ -21,8 +21,7 @@ const Login: React.FC = () => {
 
     const handleLogin = (event: any) => {
         event.preventDefault();
-        console.log('Login');
-        router.push('/app', 'root');
+        router.push('/landingPage', 'root');
     };
 
     const introDone = () => {
