@@ -7,7 +7,6 @@ const Register: React.FC = () => {
 
     const handleRegister = (event: any) => {
         event.preventDefault();
-        console.log('Registered');
         router.goBack();
     }
     return (

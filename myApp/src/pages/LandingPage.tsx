@@ -1,37 +1,39 @@
 import React, { useState } from 'react';
-import { IonBackButton, IonButton, IonButtons, IonCard, IonCardContent, IonContent, IonHeader, IonInput, IonItem, IonLabel, IonPage, IonTitle, IonToolbar, IonText, IonDatetime } from '@ionic/react';
+import { IonBackButton, IonButton, IonButtons, IonCard, IonCardContent, IonContent, IonHeader, IonInput, IonPage, IonTitle, IonToolbar, IonText, IonDatetime } from '@ionic/react';
 import axios from 'axios';
 
+//This is a workaround for the Vite environment variables issue, but will need to be changed when Frontend server is deployed
+if (typeof process === 'undefined') {
+    (window as any).process = { env: import.meta.env as ImportMetaEnv };
+}
+
 const LandingPage: React.FC = () => {
-    const [postCode, setPostCode] = useState('');
-    const [solarPanels, setSolarPanels] = useState<number>(1); // Assuming a default of 1 solar panel
+    const [post_code, setPostCode] = useState('');
+    const [solar_panels, setSolarPanels] = useState<number>(1);
+    const [date, setDate] = useState<string>('');
     const [isValid, setIsValid] = useState(true);
 
     const postCodeRegex = /([A-Z]{1,2}[0-9]{1,2})([A-Z]{1,2})?(\W)?([0-9]{1,2}[A-Z]{2})?/i; // A simple regex to match UK post codes
 
+    const backendUrl = process.env.VITE_REACT_APP_API_URL_LOCAL || process.env.VITE_REACT_APP_API_URL;
+
     const handleSubmit = (event: any) => {
         event.preventDefault();
 
-        if (!isValid) {
-            console.error('Invalid post code.');
-            return;
-        }
-
         const data = {
-            postCode,
-            solarPanels,
-            // Add other fields as necessary
+            post_code: post_code,
+            number_of_solar_panels: solar_panels,
+            date: date
         };
 
-        axios.post('`${process.env.REACT_APP_API_URL}/`', {
-            post_code: postCode,
-            number_of_solar_panels: solarPanels,
-        })
+        axios.post(`${backendUrl}/`, data)
             .then(response => {
                 console.log('Success:', response.data);
+                console.log('Full Axios Response:', response);
             })
             .catch(error => {
                 console.error('Error:', error);
+                console.error('Error Response:', error.response);
             });
     };
 
@@ -50,6 +52,11 @@ const LandingPage: React.FC = () => {
         setSolarPanels(!isNaN(value) && value > 0 ? value : 1);
     };
 
+    const handleDateChange = (e: CustomEvent) => {
+        const value = e.detail.value as string;
+        setDate(value);
+    };
+
     return (
         <IonPage>
             <IonHeader>
@@ -65,13 +72,13 @@ const LandingPage: React.FC = () => {
                 <IonCard>
                     <IonCardContent>
                         <form onSubmit={handleSubmit}>
-                            <IonInput label="Number of Solar Panels" labelPlacement="floating" type="number" value={solarPanels.toString()} onIonChange={handleSolarPanelsChange} min="1" step="1" />
-                            <IonInput label="Post Code" labelPlacement="floating" value={postCode} onIonChange={handlePostCodeChange} />
-                            {/* <IonInput label="Date" labelPlacement="floating" type="date" placeholder="Date" required></IonInput> */}
+                            <IonInput fill="outline" label="Number of Solar Panels" required labelPlacement="floating" type="number" value={solar_panels.toString()} onIonChange={handleSolarPanelsChange} min="1" step="1" />
+                            <IonInput className="ion-margin-top" fill="outline" label="Post Code" labelPlacement="floating" required value={post_code} onIonChange={handlePostCodeChange} />
+                            <IonInput className="ion-margin-top" fill="outline" label="Date" labelPlacement="floating" required type="date" placeholder="Date" value={date} onIonChange={handleDateChange}></IonInput>
                             <IonButton className="ion-margin-top" expand="block" type="submit" shape="round" color="success">
                                 Submit
                             </IonButton>
-                            {!isValid && <IonText color="danger">Please enter a valid post code.</IonText>}
+                            {!isValid && <IonText color="danger">Please enter a valid post code.</IonText>} {/*Update this to be a pop-up later on*/}
                         </form>
                     </IonCardContent>
                 </IonCard>

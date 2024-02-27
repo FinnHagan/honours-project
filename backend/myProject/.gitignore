@@ -31,3 +31,5 @@ db.sqlite3
 
 # Logs 
 *.log 
+
+settings.py
