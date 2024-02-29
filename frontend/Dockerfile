@@ -2,16 +2,16 @@
 FROM node:18 as build
 
 # Set the working directory in the container
-WORKDIR /myApp
+WORKDIR /app
 
 # Copy package.json and package-lock.json (or yarn.lock if you use Yarn) to the working directory
-COPY myApp/package*.json ./
+COPY package*.json ./
 
 # Install Node.js dependencies
 RUN npm install
 
 # Copy the rest of the application code to the container
-COPY myApp/ ./
+COPY . ./
 
 # Build the Ionic React app
 RUN npm run build
@@ -23,7 +23,7 @@ FROM nginx:alpine
 RUN rm -rf /usr/share/nginx/html/*
 
 # Copy the built Ionic React app to the nginx web server directory. Adjust the source path according to your build directory structure.
-COPY --from=build /myApp/dist /usr/share/nginx/html
+COPY --from=build /app/dist /usr/share/nginx/html
 
 # Copy the NGINX config file
 COPY nginx.conf /etc/nginx/conf.d/default.conf
