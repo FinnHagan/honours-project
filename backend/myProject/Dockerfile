@@ -20,4 +20,4 @@ COPY . ./
 EXPOSE 8000
 
 # Command to start the Django server (aligned with Cloud Run)
-CMD ["gunicorn", "--bind", "0.0.0.0:$PORT", "myProject.wsgi:application"] 
+CMD ["sh", "-c", "env && gunicorn", "--bind", "0.0.0.0:$PORT", "myProject.wsgi:application"]
