@@ -1,8 +1,7 @@
 from django.contrib import admin
-from django.urls import path
-from solarApp.views import SubmissionView
+from django.urls import path, include
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', SubmissionView.as_view(), name='submission'),
+    path('api/', include('solarApp.urls')),
 ]

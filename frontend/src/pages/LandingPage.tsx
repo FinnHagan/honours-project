@@ -15,7 +15,7 @@ const LandingPage: React.FC = () => {
 
     const postCodeRegex = /([A-Z]{1,2}[0-9]{1,2})([A-Z]{1,2})?(\W)?([0-9]{1,2}[A-Z]{2})?/i; // A simple regex to match UK post codes
 
-    const backendUrl = process.env.VITE_REACT_APP_API_URL_LOCAL || process.env.VITE_REACT_APP_API_URL;
+    const frontend = process.env.VITE_REACT_APP_API_URL_LOCAL || process.env.VITE_REACT_APP_API_URL;
 
     const handleSubmit = (event: any) => {
         event.preventDefault();
@@ -26,7 +26,7 @@ const LandingPage: React.FC = () => {
             date: date
         };
 
-        axios.post(`${backendUrl}/`, data)
+        axios.post(`${frontend}/api/submission/`, data)
             .then(response => {
                 console.log('Success:', response.data);
                 console.log('Full Axios Response:', response);
