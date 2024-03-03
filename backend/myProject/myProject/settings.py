@@ -27,7 +27,6 @@ SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY')
 DEBUG = True
 
 ALLOWED_HOSTS = [
-    "https://honours-django-backend-gvtynwpioq-uc.a.run.app",
     "https://api.finnhagan.co.uk",
     "http://localhost:8000",
 ]
@@ -98,10 +97,10 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql', 
         'NAME': 'should-i-put-my-washing-on-db', 
-        'USER': 'honours_user',         
+        'USER': os.environ.get('DB_USER'),         
         'PASSWORD': os.environ.get('DB_PASSWORD'), 
-        'HOST': '34.136.60.222',  
-        'PORT': '5432',                
+        'HOST': os.environ.get('DB_HOST'),
+        'PORT': os.environ.get('DB_PORT'),
     }
 }
 
