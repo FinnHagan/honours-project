@@ -27,10 +27,8 @@ SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY')
 DEBUG = True
 
 ALLOWED_HOSTS = [
-    'https://api.finnhagan.co.uk',
-    'localhost',
-    '134.36.250.155'
-    '169.254.1.1'
+    "https://api.finnhagan.co.uk",
+    "http://localhost:8000",
 ]
 
 
@@ -66,8 +64,8 @@ REST_FRAMEWORK = {'DEFAULT_PERMISSION_CLASSES':[
 CORS_ORIGIN_ALLOW_ALL = True
 
 CORS_ALLOWED_ORIGINS = [
-    'https://uod.finnhagan.co.uk',
-    'http://localhost:8100',
+    "https://uod.finnhagan.co.uk",
+    "http://localhost:8100",
 ]
 
 
@@ -98,7 +96,7 @@ WSGI_APPLICATION = 'myProject.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql', 
-        'NAME': 'should-i-put-my-washing-on-db', 
+        'NAME': os.environ.get('DB_NAME'), 
         'USER': os.environ.get('DB_USER'),         
         'PASSWORD': os.environ.get('DB_PASSWORD'), 
         'HOST': os.environ.get('DB_HOST'),
