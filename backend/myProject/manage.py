@@ -5,6 +5,9 @@ load_dotenv()
 import os
 import sys
 
+import mimetypes
+mimetypes.init()
+mimetypes.types_map['.css'] = 'text/css'
 
 def main():
     """Run administrative tasks."""
