@@ -29,7 +29,6 @@ DEBUG = True
 ALLOWED_HOSTS = [
     'https://api.finnhagan.co.uk',
     'http://localhost:8000',
-    'api.finnhagan.co.uk',
 ]
 
 
