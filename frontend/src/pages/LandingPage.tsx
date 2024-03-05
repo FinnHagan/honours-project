@@ -2,11 +2,6 @@ import React, { useState } from 'react';
 import { IonBackButton, IonButton, IonButtons, IonCard, IonCardContent, IonContent, IonHeader, IonInput, IonPage, IonTitle, IonToolbar, IonText, IonDatetime } from '@ionic/react';
 import axios from 'axios';
 
-//This is a workaround for the Vite environment variables issue, but will need to be changed when Frontend server is deployed
-if (typeof process === 'undefined') {
-    (window as any).process = { env: import.meta.env as ImportMetaEnv };
-}
-
 const LandingPage: React.FC = () => {
     const [post_code, setPostCode] = useState('');
     const [solar_panels, setSolarPanels] = useState<number>(1);
