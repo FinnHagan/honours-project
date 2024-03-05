@@ -29,6 +29,7 @@ DEBUG = True
 ALLOWED_HOSTS = [
     'https://api.finnhagan.co.uk',
     'http://localhost:8000',
+    'api.finnhagan.co.uk',
 ]
 
 
@@ -66,6 +67,7 @@ CORS_ORIGIN_ALLOW_ALL = True
 CORS_ALLOWED_ORIGINS = [
     'https://uod.finnhagan.co.uk',
     'http://localhost:8100',
+    'uod.finnhagan.co.uk'
 ]
 
 
