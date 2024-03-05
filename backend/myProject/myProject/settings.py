@@ -67,6 +67,8 @@ CORS_ORIGIN_ALLOW_ALL = True
 CORS_ALLOWED_ORIGINS = [
     'https://uod.finnhagan.co.uk',
     'http://localhost:8100',
+    'https://api.finnhagan.co.uk',
+    'api.finnhagan.co.uk',
 ]
 
 
@@ -141,8 +143,7 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.0/howto/static-files/
 
 STATIC_URL = 'static/'
-STATIC_ROOT = '/opt/bitnami/projects/decisions/decision/'
-
+STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
 

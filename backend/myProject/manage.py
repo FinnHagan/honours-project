@@ -5,10 +5,6 @@ load_dotenv()
 import os
 import sys
 
-import mimetypes
-mimetypes.init()
-mimetypes.types_map['.css'] = 'text/css'
-
 def main():
     """Run administrative tasks."""
     os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'myProject.settings')
