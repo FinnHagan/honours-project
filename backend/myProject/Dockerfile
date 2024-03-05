@@ -2,7 +2,7 @@
 FROM python:3.12.0-slim
 
 # Set working directory
-WORKDIR backend/myProject
+WORKDIR /backend/myProject
 
 # Environment variables (For production, we'll get these from Cloud Run)
 ENV PYTHONUNBUFFERED=1
