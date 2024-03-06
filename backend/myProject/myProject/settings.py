@@ -30,7 +30,7 @@ ALLOWED_HOSTS = [
     'https://api.finnhagan.co.uk',
     'http://localhost:8000',
     'api.finnhagan.co.uk',
-    # '127.0.0.1',
+    '127.0.0.1',
 ]
 
 
