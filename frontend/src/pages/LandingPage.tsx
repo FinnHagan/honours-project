@@ -19,7 +19,7 @@ const LandingPage: React.FC = () => {
             date: date
         };
 
-        axios.post('/api/submission/', data)
+        axios.post('https://api.finnhagan.co.uk/api/submission/', data)
             .then(response => {
                 console.log('Success:', response.data);
                 console.log('Full Axios Response:', response);
