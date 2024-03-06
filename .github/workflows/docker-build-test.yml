@@ -13,10 +13,7 @@ jobs:
       uses: actions/checkout@v2
 
     - name: Build Docker Image
-      run: docker build -t should-i-put-my-washing-on .
+      run: docker build -t gcr.io/modular-magpie-414414/should-i-put-my-washing-on:latest .
 
-    - name: Run Container
-      run: docker run -d -p 8080:8080 should-i-put-my-washing-on
-
-    - name: Check Container Status
-      run: docker ps
+    - name: Push Docker Image
+      run: docker push gcr.io/modular-magpie-414414/should-i-put-my-washing-on:latest
