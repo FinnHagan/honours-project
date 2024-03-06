@@ -19,7 +19,7 @@ const LandingPage: React.FC = () => {
             date: date
         };
 
-        axios.post(`${process.env.VITE_REACT_APP_API_URL}/api/submission/`, data)
+        axios.post(`${import.meta.env.VITE_API_URL}/api/submission/`, data)
             .then(response => {
                 console.log('Success:', response.data);
                 console.log('Full Axios Response:', response);

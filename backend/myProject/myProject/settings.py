@@ -30,6 +30,7 @@ ALLOWED_HOSTS = [
     'https://api.finnhagan.co.uk',
     'http://localhost:8000',
     'api.finnhagan.co.uk',
+    # '127.0.0.1',
 ]
 
 
@@ -68,7 +69,7 @@ CORS_ALLOWED_ORIGINS = [
     'https://uod.finnhagan.co.uk',
     'http://localhost:8100',
     'https://api.finnhagan.co.uk',
-    'api.finnhagan.co.uk',
+    # 'api.finnhagan.co.uk',
 ]
 
 
