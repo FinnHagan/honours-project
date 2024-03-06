@@ -16,7 +16,7 @@ jobs:
       run: docker build -t gcr.io/modular-magpie-414414/should-i-put-my-washing-on .
 
     - name: Push Container
-      run: docker push -p 8080:8080 gcr.io/modular-magpie-414414/should-i-put-my-washing-on
+      run: docker push gcr.io/modular-magpie-414414/should-i-put-my-washing-on
 
     - name: Check Container Status
       run: docker ps
