@@ -10,7 +10,7 @@ const LandingPage: React.FC = () => {
 
     const postCodeRegex = /([A-Z]{1,2}[0-9]{1,2})([A-Z]{1,2})?(\W)?([0-9]{1,2}[A-Z]{2})?/i; // A simple regex to match UK post codes
 
-    const backendUrl = import.meta.env.VITE_API_URL;
+    // const backendUrl = import.meta.env.VITE_API_URL;
 
     async function fetchCSRFToken() {
         const response = await axios.get(`${backendUrl}/get-csrf-token/`);
@@ -28,15 +28,10 @@ const LandingPage: React.FC = () => {
             date: date
         };
 
-        axios.post(`${backendUrl}/api/submission/`, data)
+        axios.post(`https://api.finnhagan.co.uk/api/submission/`, data)
             .then(response => {
-                if (response.data.success) { // Check for success
-                    console.log('Successfully submitted the form!');
-
-                } else {
-                    // Handle errors
-                    console.error('Submission failed:', response.data.errors);
-                }
+                console.log('Success:', response.data);
+                console.log('Full Axios Response:', response);
             })
             .catch(error => {
                 console.error('Error:', error);
