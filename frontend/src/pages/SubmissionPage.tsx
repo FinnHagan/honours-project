@@ -10,8 +10,6 @@ const SubmissionPage: React.FC = () => {
 
     const postCodeRegex = /([A-Z]{1,2}[0-9]{1,2})([A-Z]{1,2})?(\W)?([0-9]{1,2}[A-Z]{2})?/i; // A simple regex to match UK post codes
 
-    // const backendUrl = import.meta.env.VITE_API_URL;
-
     const handleSubmit = (event: any) => {
         event.preventDefault();
 
