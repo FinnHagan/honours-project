@@ -12,13 +12,6 @@ const LandingPage: React.FC = () => {
 
     // const backendUrl = import.meta.env.VITE_API_URL;
 
-    async function fetchCSRFToken() {
-        const response = await axios.get(`https://api.finnhagan.co.uk/api/submission/get-csrf-token/`);
-        axios.defaults.headers.common['X-CSRFToken'] = response.data.csrfToken;
-    }
-
-    fetchCSRFToken();
-
     const handleSubmit = (event: any) => {
         event.preventDefault();
 
@@ -27,8 +20,6 @@ const LandingPage: React.FC = () => {
             number_of_solar_panels: solar_panels,
             date: date
         };
-
-        axios.defaults.xsrfHeaderName = "X-CSRFToken";
 
         axios.post(`https://api.finnhagan.co.uk/api/submission/`, data)
             .then(response => {
