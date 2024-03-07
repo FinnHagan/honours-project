@@ -73,6 +73,11 @@ CORS_ALLOWED_ORIGINS = [
     'https://*.finnhagan.co.uk',
 ]
 
+CSRF_TRUSTED_ORIGINS = [
+    'https://uod.finnhagan.co.uk',
+    'https://api.finnhagan.co.uk', 
+]
+
 ROOT_URLCONF = 'myProject.urls'
 
 TEMPLATES = [
