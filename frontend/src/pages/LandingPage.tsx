@@ -28,14 +28,15 @@ const LandingPage: React.FC = () => {
             date: date
         };
 
-        console.log('VITE_API_URL value:', backendUrl);
-        console.log('Full URL:', `${backendUrl}/api/submission/`);
-
-
         axios.post(`${backendUrl}/api/submission/`, data)
             .then(response => {
-                console.log('Success:', response.data);
-                console.log('Full Axios Response:', response);
+                if (response.data.success) { // Check for success
+                    console.log('Successfully submitted the form!');
+
+                } else {
+                    // Handle errors
+                    console.error('Submission failed:', response.data.errors);
+                }
             })
             .catch(error => {
                 console.error('Error:', error);
