@@ -49,6 +49,7 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',  
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -57,7 +58,6 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'corsheaders.middleware.CorsMiddleware',
 ]
 
 REST_FRAMEWORK = {'DEFAULT_PERMISSION_CLASSES':[
@@ -70,9 +70,8 @@ CORS_ALLOWED_ORIGINS = [
     'https://uod.finnhagan.co.uk',
     'http://localhost:8100',
     'https://api.finnhagan.co.uk',
-    # 'api.finnhagan.co.uk',
+    'https://*.finnhagan.co.uk'
 ]
-
 
 ROOT_URLCONF = 'myProject.urls'
 
