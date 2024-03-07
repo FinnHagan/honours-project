@@ -28,6 +28,8 @@ const LandingPage: React.FC = () => {
             date: date
         };
 
+        axios.defaults.xsrfHeaderName = "X-CSRFToken";
+
         axios.post(`https://api.finnhagan.co.uk/api/submission/`, data)
             .then(response => {
                 console.log('Success:', response.data);
