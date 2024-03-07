@@ -2,22 +2,13 @@ import React, { useState } from 'react';
 import { IonBackButton, IonButton, IonButtons, IonCard, IonCardContent, IonContent, IonHeader, IonInput, IonPage, IonTitle, IonToolbar, IonText, IonDatetime } from '@ionic/react';
 import axios from 'axios';
 
-const LandingPage: React.FC = () => {
+const SubmissionPage: React.FC = () => {
     const [post_code, setPostCode] = useState('');
     const [solar_panels, setSolarPanels] = useState<number>(1);
     const [date, setDate] = useState<string>('');
     const [isValid, setIsValid] = useState(true);
 
     const postCodeRegex = /([A-Z]{1,2}[0-9]{1,2})([A-Z]{1,2})?(\W)?([0-9]{1,2}[A-Z]{2})?/i; // A simple regex to match UK post codes
-
-    // const backendUrl = import.meta.env.VITE_API_URL;
-
-    async function fetchCSRFToken() {
-        const response = await axios.get(`https://api.finnhagan.co.uk/api/submission/get-csrf-token/`);
-        axios.defaults.headers.common['X-CSRFToken'] = response.data.csrfToken;
-    }
-
-    fetchCSRFToken();
 
     const handleSubmit = (event: any) => {
         event.preventDefault();
@@ -27,8 +18,6 @@ const LandingPage: React.FC = () => {
             number_of_solar_panels: solar_panels,
             date: date
         };
-
-        axios.defaults.xsrfHeaderName = "X-CSRFToken";
 
         axios.post(`https://api.finnhagan.co.uk/api/submission/`, data)
             .then(response => {
@@ -91,4 +80,4 @@ const LandingPage: React.FC = () => {
     );
 };
 
-export default LandingPage;
+export default SubmissionPage;
