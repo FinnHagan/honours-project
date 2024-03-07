@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { IonBackButton, IonButton, IonButtons, IonCard, IonCardContent, IonContent, IonHeader, IonInput, IonPage, IonTitle, IonToolbar, IonText, IonDatetime } from '@ionic/react';
 import axios from 'axios';
 
-const LandingPage: React.FC = () => {
+const SubmissionPage: React.FC = () => {
     const [post_code, setPostCode] = useState('');
     const [solar_panels, setSolarPanels] = useState<number>(1);
     const [date, setDate] = useState<string>('');
@@ -82,4 +82,4 @@ const LandingPage: React.FC = () => {
     );
 };
 
-export default LandingPage;
+export default SubmissionPage;
