@@ -10,8 +10,10 @@ const LandingPage: React.FC = () => {
 
     const postCodeRegex = /([A-Z]{1,2}[0-9]{1,2})([A-Z]{1,2})?(\W)?([0-9]{1,2}[A-Z]{2})?/i; // A simple regex to match UK post codes
 
+    const backendUrl = import.meta.env.VITE_API_URL;
+
     async function fetchCSRFToken() {
-        const response = await axios.get(`${import.meta.env.VITE_API_URL}/get-csrf-token/`);
+        const response = await axios.get(`${backendUrl}/get-csrf-token/`);
         axios.defaults.headers.common['X-CSRFToken'] = response.data.csrfToken;
     }
 
@@ -26,7 +28,11 @@ const LandingPage: React.FC = () => {
             date: date
         };
 
-        axios.post(`${import.meta.env.VITE_API_URL}/api/submission/`, data)
+        console.log('VITE_API_URL value:', backendUrl);
+        console.log('Full URL:', `${backendUrl}/api/submission/`);
+
+
+        axios.post(`${backendUrl}/api/submission/`, data)
             .then(response => {
                 console.log('Success:', response.data);
                 console.log('Full Axios Response:', response);
