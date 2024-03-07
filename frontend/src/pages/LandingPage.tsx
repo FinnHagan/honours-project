@@ -13,7 +13,7 @@ const LandingPage: React.FC = () => {
     // const backendUrl = import.meta.env.VITE_API_URL;
 
     async function fetchCSRFToken() {
-        const response = await axios.get(`${backendUrl}/get-csrf-token/`);
+        const response = await axios.get(`https://api.finnhagan.co.uk/api/submission//get-csrf-token/`);
         axios.defaults.headers.common['X-CSRFToken'] = response.data.csrfToken;
     }
 
