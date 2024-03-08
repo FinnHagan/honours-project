@@ -9,9 +9,8 @@ const SubmissionPage: React.FC = () => {
     const [isValid, setIsValid] = useState(true);
 
     const postCodeRegex = /([A-Z]{1,2}[0-9]{1,2})([A-Z]{1,2})?(\W)?([0-9]{1,2}[A-Z]{2})?/i; // A simple regex to match UK post codes
-
     const viteUrl = import.meta.env.dev.VITE_APP_API_URL;
-    const viteUrl1 = import.meta.env.mode.VITE_APP_API_URL;
+    const viteAppUrl = import.meta.env.mode.VITE_APP_API_URL;
 
     const handleSubmit = (event: any) => {
         event.preventDefault();
@@ -22,8 +21,8 @@ const SubmissionPage: React.FC = () => {
             date: date
         };
 
-        console.log("Vite Api URL:", viteUrl);
-        console.log("Vite Api URL1:", viteUrl1);
+        console.log('Url:', viteUrl);
+        console.log('App Url:', viteAppUrl);
 
         axios.post(`https://api.finnhagan.co.uk/api/submission/`, data)
             .then(response => {
