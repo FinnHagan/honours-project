@@ -1,17 +1,23 @@
 import React, { useState } from 'react';
-import { IonBackButton, IonButton, IonButtons, IonCard, IonCardContent, IonContent, IonHeader, IonInput, IonPage, IonTitle, IonToolbar, IonText, IonDatetime } from '@ionic/react';
+import { IonBackButton, IonButton, IonButtons, IonCard, IonCardContent, IonContent, IonHeader, IonInput, IonPage, IonTitle, IonToolbar, IonText, IonLoading } from '@ionic/react';
 import axios from 'axios';
+import isValid from "uk-postcode-validator";
 
 const SubmissionPage: React.FC = () => {
     const [post_code, setPostCode] = useState('');
     const [solar_panels, setSolarPanels] = useState<number>(1);
     const [date, setDate] = useState<string>('');
-    const [isValid, setIsValid] = useState(true);
+    const [isTrue, setIsTrue] = useState(true);
+    const [postCodeError, setPostCodeErrorMessage] = useState<string>('');
+    const [solarPanelError, setPanelErrorMessage] = useState<string>('');
+    const [isLoading, setIsLoading] = useState(false);
 
-    const postCodeRegex = /([A-Z]{1,2}[0-9]{1,2})([A-Z]{1,2})?(\W)?([0-9]{1,2}[A-Z]{2})?/i; // A simple regex to match UK post codes
-
-    const handleSubmit = (event: any) => {
+    const handleSubmit = async (event: any) => {
         event.preventDefault();
+
+        if (!isTrue) {
+            return;
+        }
 
         const data = {
             post_code: post_code,
@@ -19,30 +25,40 @@ const SubmissionPage: React.FC = () => {
             date: date
         };
 
-        axios.post(`https://api.finnhagan.co.uk/api/submission/`, data)
-            .then(response => {
-                console.log('Success:', response.data);
-                console.log('Full Axios Response:', response);
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                console.error('Error Response:', error.response);
-            });
+        setIsLoading(true);
+
+        try {
+            const response = await axios.post(`https://api.finnhagan.co.uk/api/submission/`, data);
+            console.log('Success:', response.data);
+            console.log('Full Axios Response:', response);
+        } catch (error) {
+            console.error('Error:', error);
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     const handlePostCodeChange = (e: CustomEvent) => {
         const value = e.detail.value as string;
-        if (postCodeRegex.test(value) || value === '') {
-            setIsValid(true);
-        } else {
-            setIsValid(false);
-        }
+        const isValidPostcode = isValid(value);
+        setIsTrue(isValidPostcode);
         setPostCode(value);
+
+        if (!isValidPostcode) {
+            setPostCodeErrorMessage('Invalid UK Postcode. Please try again.');
+        } else {
+            setPostCodeErrorMessage('');
+        }
     };
 
     const handleSolarPanelsChange = (e: CustomEvent) => {
         const value = parseInt(e.detail.value, 10);
-        setSolarPanels(!isNaN(value) && value > 0 ? value : 1);
+        if (!isNaN(value) && value > 0) {
+            setSolarPanels(value);
+            setPanelErrorMessage(''); // Clear error state if input is valid
+        } else {
+            setPanelErrorMessage("Please enter a valid number of panels (greater than 0).");
+        }
     };
 
     const handleDateChange = (e: CustomEvent) => {
@@ -64,14 +80,16 @@ const SubmissionPage: React.FC = () => {
             <IonContent>
                 <IonCard>
                     <IonCardContent>
+                        <IonLoading isOpen={isLoading} message="Submission in progress... calculating optimal time " />
                         <form onSubmit={handleSubmit}>
                             <IonInput fill="outline" label="Number of Solar Panels" required labelPlacement="floating" type="number" value={solar_panels.toString()} onIonChange={handleSolarPanelsChange} min="1" step="1" />
+                            {solarPanelError && <IonText color="danger"><sub>{solarPanelError}</sub></IonText>}
                             <IonInput className="ion-margin-top" fill="outline" label="Post Code" labelPlacement="floating" required value={post_code} onIonChange={handlePostCodeChange} />
+                            {!isTrue && <IonText color="danger"><sub>{postCodeError}</sub></IonText>}
                             <IonInput className="ion-margin-top" fill="outline" label="Date" labelPlacement="floating" required type="date" placeholder="Date" value={date} onIonChange={handleDateChange}></IonInput>
-                            <IonButton className="ion-margin-top" expand="block" type="submit" shape="round" color="success">
+                            <IonButton disabled={!isTrue || solarPanelError !== ''} className="ion-margin-top" expand="block" type="submit" shape="round" color="success">
                                 Submit
                             </IonButton>
-                            {!isValid && <IonText color="danger">Please enter a valid post code.</IonText>} {/*Update this to be a pop-up later on*/}
                         </form>
                     </IonCardContent>
                 </IonCard>

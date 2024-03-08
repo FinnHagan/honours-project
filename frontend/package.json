@@ -36,7 +36,8 @@
     "react-router-dom": "^5.3.4",
     "rm": "^0.1.8",
     "save": "^2.9.0",
-    "swiper": "^11.0.6"
+    "swiper": "^11.0.6",
+    "uk-postcode-validator": "^1.1.3"
   },
   "devDependencies": {
     "@capacitor/cli": "5.7.0",
