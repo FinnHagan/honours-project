@@ -10,8 +10,6 @@ const SubmissionPage: React.FC = () => {
 
     const postCodeRegex = /([A-Z]{1,2}[0-9]{1,2})([A-Z]{1,2})?(\W)?([0-9]{1,2}[A-Z]{2})?/i; // A simple regex to match UK post codes
 
-    const baseUrl = import.meta.env.BASE_URL;
-
     const handleSubmit = (event: any) => {
         event.preventDefault();
 
@@ -20,8 +18,6 @@ const SubmissionPage: React.FC = () => {
             number_of_solar_panels: solar_panels,
             date: date
         };
-
-        console.log('url:', baseUrl);
 
         axios.post(`https://api.finnhagan.co.uk/api/submission/`, data)
             .then(response => {
