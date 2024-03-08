@@ -12,8 +12,6 @@ const SubmissionPage: React.FC = () => {
 
     const viteUrl = import.meta.env.dev.VITE_APP_API_URL;
     const viteUrl1 = import.meta.env.mode.VITE_APP_API_URL;
-    const viteUrl2 = import.meta.env.BASE_URL;
-
 
     const handleSubmit = (event: any) => {
         event.preventDefault();
@@ -26,7 +24,6 @@ const SubmissionPage: React.FC = () => {
 
         console.log("Vite Api URL:", viteUrl);
         console.log("Vite Api URL1:", viteUrl1);
-        console.log("Vite Api URL2:", viteUrl2);
 
         axios.post(`https://api.finnhagan.co.uk/api/submission/`, data)
             .then(response => {
