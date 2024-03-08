@@ -22,6 +22,7 @@ db.sqlite3
 # Environment Variables
 .env
 .env.local
+.env.development
 
 # Logs 
 *.log 
