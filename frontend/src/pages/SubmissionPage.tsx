@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { IonBackButton, IonButton, IonButtons, IonCard, IonCardContent, IonContent, IonHeader, IonInput, IonPage, IonTitle, IonToolbar, IonText, IonLoading } from '@ionic/react';
+import { IonBackButton, IonButton, IonButtons, IonCard, IonCardContent, IonContent, IonHeader, IonInput, IonPage, IonTitle, IonToolbar, IonText, IonLoading, IonToast } from '@ionic/react';
 import axios from 'axios';
 import isValid from "uk-postcode-validator";
 
@@ -11,6 +11,7 @@ const SubmissionPage: React.FC = () => {
     const [postCodeError, setPostCodeErrorMessage] = useState<string>('');
     const [solarPanelError, setPanelErrorMessage] = useState<string>('');
     const [isLoading, setIsLoading] = useState(false);
+    const [showToast, setShowToast] = useState(false);
 
     const handleSubmit = async (event: any) => {
         event.preventDefault();
@@ -31,10 +32,13 @@ const SubmissionPage: React.FC = () => {
             const response = await axios.post(`https://api.finnhagan.co.uk/api/submission/`, data);
             console.log('Success:', response.data);
             console.log('Full Axios Response:', response);
+            setShowToast(true);
+
         } catch (error) {
             console.error('Error:', error);
         } finally {
             setIsLoading(false);
+            setTimeout(() => { setShowToast(false) }, 3000);
         }
     };
 
@@ -81,6 +85,7 @@ const SubmissionPage: React.FC = () => {
                 <IonCard>
                     <IonCardContent>
                         <IonLoading isOpen={isLoading} message="Submission in progress... calculating optimal time " />
+                        <IonToast isOpen={showToast} onDidDismiss={() => setShowToast(false)} message="Submission successful!" color="success" duration={3000} />
                         <form onSubmit={handleSubmit}>
                             <IonInput fill="outline" label="Number of Solar Panels" required labelPlacement="floating" type="number" value={solar_panels.toString()} onIonChange={handleSolarPanelsChange} min="1" step="1" />
                             {solarPanelError && <IonText color="danger"><sub>{solarPanelError}</sub></IonText>}
