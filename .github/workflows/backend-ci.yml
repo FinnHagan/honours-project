@@ -1,7 +1,7 @@
 name: Django Backend CI
 
 on:
-  push:
+  pull_request:
     branches: [ main ] 
   workflow_dispatch:
 
@@ -10,7 +10,8 @@ jobs:
     runs-on: ubuntu-latest 
 
     steps:
-      - uses: actions/checkout@v3
+      - name: Code
+        uses: actions/checkout@v3
 
       - name: Set up Python 
         uses: actions/setup-python@v4 
@@ -31,3 +32,6 @@ jobs:
 
       - name: Run Container
         run: docker run -it gcr.io/modular-magpie-414414/django-backend
+
+      - name: Check Container Status
+        run: docker ps
