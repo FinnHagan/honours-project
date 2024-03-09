@@ -1,0 +1,33 @@
+name: Django Backend CI
+
+on:
+  push:
+    branches: [ main ] 
+  workflow_dispatch:
+
+jobs:
+  build-and-test: 
+    runs-on: ubuntu-latest 
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Python 
+        uses: actions/setup-python@v4 
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run Linting
+        run: flake8 .
+
+      - name: Run Tests
+        run: python manage.py test
+
+      - name: Build Docker Image 
+        run: docker build -t gcr.io/modular-magpie-414414/django-backend . 
+
+      - name: Run Container
+        run: docker run -it gcr.io/modular-magpie-414414/django-backend
