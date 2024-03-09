@@ -8,3 +8,7 @@ pytz==2024.1
 sqlparse==0.4.4
 tzdata==2024.1
 whitenoise==5.3.0
+flake8
+mccabe
+pycodestyle
+pyflakes
