@@ -13,6 +13,8 @@ COPY requirements.txt ./
 # Install dependencies 
 RUN pip install -r requirements.txt
 
+RUN flake8 --ignore=E501
+
 # Copy your Django project code
 COPY . ./
 
