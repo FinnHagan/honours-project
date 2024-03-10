@@ -13,6 +13,10 @@ const SubmissionPage: React.FC = () => {
     const [isLoading, setIsLoading] = useState(false);
     const [showToast, setShowToast] = useState(false);
 
+    const [postCodeForAPI, setPostCodeForAPI] = useState<string>('');
+    const [temperature, setTemperature] = useState<number | null>(null);
+    const [cloud_cover, setCloudCover] = useState<string | null>(null);
+
     const handleSubmit = async (event: any) => {
         event.preventDefault();
 
@@ -21,21 +25,44 @@ const SubmissionPage: React.FC = () => {
         }
 
         const data = {
-            post_code: post_code,
+            post_code: postCodeForAPI,
             number_of_solar_panels: solar_panels,
             date: date
         };
 
+        console.log('Data:', data);
+
         setIsLoading(true);
 
+        // Fetch Weather Data 
         try {
-            const response = await axios.post(`https://api.finnhagan.co.uk/api/submission/`, data);
-            console.log('Success:', response.data);
-            console.log('Full Axios Response:', response);
+            const weatherResponse = await axios.post(`https://api.finnhagan.co.uk/api/weatherdata/`, data);
+            console.log(weatherResponse.data);
+            axios.defaults.headers.post['Content-Type'] = 'application/json';
+            setTemperature(weatherResponse.data.temperature);
+            setCloudCover(weatherResponse.data.cloud_cover);
+        } catch (error) {
+            console.error("Error fetching weather:", error);
+        }
+
+
+        // Send Submission (including weather data)
+        try {
+            const submissionData = {
+                post_code: post_code,
+                number_of_solar_panels: solar_panels,
+                date: date,
+                temperature: temperature,
+                cloud_cover: cloud_cover
+            };
+
+            const submissionResponse = await axios.post(`https://api.finnhagan.co.uk/api/submission/`, submissionData);
+            console.log('Success:', submissionResponse.data);
+            console.log('Full Axios Response:', submissionResponse);
             setShowToast(true);
 
         } catch (error) {
-            console.error('Error:', error);
+            console.error('Submission Error:', error);
         } finally {
             setIsLoading(false);
             setTimeout(() => { setShowToast(false) }, 3000);
@@ -46,6 +73,10 @@ const SubmissionPage: React.FC = () => {
         const value = e.detail.value as string;
         const isValidPostcode = isValid(value);
         setIsTrue(isValidPostcode);
+
+        const transformedPostcode = value.substring(0, 3) + ",GB"; // Transform to format required by API
+        setPostCodeForAPI(transformedPostcode);
+
         setPostCode(value);
 
         if (!isValidPostcode) {
