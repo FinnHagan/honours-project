@@ -12,3 +12,4 @@ flake8
 mccabe
 pycodestyle
 pyflakes
+requests
