@@ -3,102 +3,100 @@ import { IonBackButton, IonButton, IonButtons, IonCard, IonCardContent, IonConte
 import axios from 'axios';
 import isValid from "uk-postcode-validator";
 
+const apiURL = import.meta.env.VITE_API_URL as string;
+
+//Define the interfaces for the data being sent to API
+interface WeatherData {
+    post_code: string;
+    number_of_solar_panels: number;
+    date: string;
+}
+
+interface SubmissionData extends WeatherData {
+    temperature: number | null;
+    cloud_cover: string | null;
+}
+
+//Gets user input from form and sends it to the API
+const fetchWeatherData = async (data: WeatherData) => {
+    console.log("API URL:", `${apiURL}/weatherdata/`)
+    return axios.post(`${apiURL}/weatherdata/`, data, {
+        headers: { 'Content-Type': 'application/json' },
+    });
+};
+
+//Submits the combined data to the API
+const submitData = async (data: SubmissionData) => {
+    return axios.post(`${apiURL}/submission/`, data, {
+        headers: { 'Content-Type': 'application/json' },
+    });
+};
+
 const SubmissionPage: React.FC = () => {
-    const [post_code, setPostCode] = useState('');
-    const [solar_panels, setSolarPanels] = useState<number>(1);
-    const [date, setDate] = useState<string>('');
-    const [isTrue, setIsTrue] = useState(true);
-    const [postCodeError, setPostCodeErrorMessage] = useState<string>('');
-    const [solarPanelError, setPanelErrorMessage] = useState<string>('');
+    const [formData, setFormData] = useState({
+        postCode: '',
+        solarPanels: 1,
+        date: '',
+        isValid: true,
+        postCodeError: '',
+        solarPanelError: '',
+    });
     const [isLoading, setIsLoading] = useState(false);
     const [showToast, setShowToast] = useState(false);
-
-    const [postCodeForAPI, setPostCodeForAPI] = useState<string>('');
-    const [temperature, setTemperature] = useState<number | null>(null);
-    const [cloud_cover, setCloudCover] = useState<string | null>(null);
 
     const handleSubmit = async (event: any) => {
         event.preventDefault();
 
-        if (!isTrue) {
+        if (!formData.isValid) {
             return;
         }
 
         const data = {
-            post_code: postCodeForAPI,
-            number_of_solar_panels: solar_panels,
-            date: date
+            post_code: `${formData.postCode.substring(0, 3)},GB`, // Format the postcode to match the API call format
+            number_of_solar_panels: formData.solarPanels,
+            date: formData.date,
         };
-
-        console.log('Data:', data);
 
         setIsLoading(true);
 
-        // Fetch Weather Data 
         try {
-            const weatherResponse = await axios.post(`https://api.finnhagan.co.uk/api/weatherdata/`, data);
-            console.log(weatherResponse.data);
-            axios.defaults.headers.post['Content-Type'] = 'application/json';
-            setTemperature(weatherResponse.data.temperature);
-            setCloudCover(weatherResponse.data.cloud_cover);
-        } catch (error) {
-            console.error("Error fetching weather:", error);
-        }
-
-
-        // Send Submission (including weather data)
-        try {
+            const weatherResponse = await fetchWeatherData(data);
             const submissionData = {
-                post_code: post_code,
-                number_of_solar_panels: solar_panels,
-                date: date,
-                temperature: temperature,
-                cloud_cover: cloud_cover
+                post_code: formData.postCode,
+                number_of_solar_panels: formData.solarPanels,
+                date: formData.date,
+                temperature: weatherResponse.data.temperature, //Need to get data directly from weather response so it isn't set as null
+                cloud_cover: weatherResponse.data.cloud_cover, //Need to get data directly from weather response so it isn't set as null
             };
-
-            const submissionResponse = await axios.post(`https://api.finnhagan.co.uk/api/submission/`, submissionData);
-            console.log('Success:', submissionResponse.data);
-            console.log('Full Axios Response:', submissionResponse);
+            await submitData(submissionData);
             setShowToast(true);
-
         } catch (error) {
-            console.error('Submission Error:', error);
+            console.error("Error fetching weather or submitting data:", error);
         } finally {
             setIsLoading(false);
-            setTimeout(() => { setShowToast(false) }, 3000);
+            setTimeout(() => setShowToast(false), 3000);
         }
     };
 
-    const handlePostCodeChange = (e: CustomEvent) => {
-        const value = e.detail.value as string;
-        const isValidPostcode = isValid(value);
-        setIsTrue(isValidPostcode);
-
-        const transformedPostcode = value.substring(0, 3) + ",GB"; // Transform to format required by API
-        setPostCodeForAPI(transformedPostcode);
-
-        setPostCode(value);
-
-        if (!isValidPostcode) {
-            setPostCodeErrorMessage('Invalid UK Postcode. Please try again.');
+    const handleInputChange = (name: string, value: any) => {
+        if (name === 'postCode') {
+            const isValidPostcode = isValid(value);
+            setFormData({
+                ...formData,
+                [name]: value,
+                isValid: isValidPostcode, //Use isValid from Uk postcode validator to check if the postcode is valid
+                postCodeError: isValidPostcode ? '' : 'Invalid UK Postcode. Please try again.',
+            });
+        } else if (name === 'solarPanels') {
+            const valid = !isNaN(value) && value > 0;
+            setFormData({
+                ...formData,
+                [name]: value,
+                solarPanelError: valid ? '' : "Please enter a valid number of panels (greater than 0).",
+            });
         } else {
-            setPostCodeErrorMessage('');
+            setFormData({ ...formData, [name]: value });
         }
-    };
-
-    const handleSolarPanelsChange = (e: CustomEvent) => {
-        const value = parseInt(e.detail.value, 10);
-        if (!isNaN(value) && value > 0) {
-            setSolarPanels(value);
-            setPanelErrorMessage(''); // Clear error state if input is valid
-        } else {
-            setPanelErrorMessage("Please enter a valid number of panels (greater than 0).");
-        }
-    };
-
-    const handleDateChange = (e: CustomEvent) => {
-        const value = e.detail.value as string;
-        setDate(value);
     };
 
     return (
@@ -118,12 +116,12 @@ const SubmissionPage: React.FC = () => {
                         <IonLoading isOpen={isLoading} message="Submission in progress... calculating optimal time " />
                         <IonToast isOpen={showToast} onDidDismiss={() => setShowToast(false)} message="Submission successful!" color="success" duration={3000} />
                         <form onSubmit={handleSubmit}>
-                            <IonInput fill="outline" label="Number of Solar Panels" required labelPlacement="floating" type="number" value={solar_panels.toString()} onIonChange={handleSolarPanelsChange} min="1" step="1" />
-                            {solarPanelError && <IonText color="danger"><sub>{solarPanelError}</sub></IonText>}
-                            <IonInput className="ion-margin-top" fill="outline" label="Post Code" labelPlacement="floating" required value={post_code} onIonChange={handlePostCodeChange} />
-                            {!isTrue && <IonText color="danger"><sub>{postCodeError}</sub></IonText>}
-                            <IonInput className="ion-margin-top" fill="outline" label="Date" labelPlacement="floating" required type="date" placeholder="Date" value={date} onIonChange={handleDateChange}></IonInput>
-                            <IonButton disabled={!isTrue || solarPanelError !== ''} className="ion-margin-top" expand="block" type="submit" shape="round" color="success">
+                            <IonInput fill="outline" label="Number of Solar Panels" required labelPlacement="floating" type="number" value={formData.solarPanels.toString()} onIonChange={(e) => handleInputChange('solarPanels', parseInt(e.detail.value ?? '0', 10))} min="1" step="1" />
+                            {formData.solarPanelError && <IonText color="danger"><sub>{formData.solarPanelError}</sub></IonText>}
+                            <IonInput className="ion-margin-top" fill="outline" label="Post Code" labelPlacement="floating" required value={formData.postCode} onIonChange={(e) => handleInputChange('postCode', e.detail.value)} />
+                            {!formData.isValid && <IonText color="danger"><sub>{formData.postCodeError}</sub></IonText>}
+                            <IonInput className="ion-margin-top" fill="outline" label="Date" labelPlacement="floating" required type="date" placeholder="Date" value={formData.date} onIonChange={(e) => handleInputChange('date', e.detail.value)}></IonInput>
+                            <IonButton disabled={!formData.isValid || formData.solarPanelError !== ''} className="ion-margin-top" expand="block" type="submit" shape="round" color="success">
                                 Submit
                             </IonButton>
                         </form>
