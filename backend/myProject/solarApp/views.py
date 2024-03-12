@@ -28,12 +28,26 @@ class WeatherDataView(APIView):
             weather_response = requests.get(weather_api_url)
             if weather_response.status_code == 200:
                 weather_data = weather_response.json()
+                print("Weather Data", weather_data)
                 temperature = float(weather_data['current']['temp']) - 273.15 # Convert from Kelvin to Celsius
                 cloud_cover = str(weather_data['current']['clouds']) + "%" # Show percentage cloud cover
+                wind_speed = weather_data['current']['wind_speed']
+                wind_direction = weather_data['current']['wind_deg']
+                humidity = weather_data['current']['humidity']
+                # Add new data extraction with error handling:   
+                precipitation = 0.0 
+                if 'rain' in weather_data['current']:
+                    precipitation += weather_data['current']['rain'].get('1h', 0.0)
+                if 'snow' in weather_data['current']:
+                    precipitation += weather_data['current']['snow'].get('1h', 0.0)
 
                 return Response({
                     "temperature": temperature,
                     "cloud_cover": cloud_cover,
+                    "wind_speed": wind_speed,
+                    "wind_direction": wind_direction,
+                    "humidity": humidity,
+                    "precipitation": precipitation
                 })
             else:
                 return Response({"error": "Error fetching weather data"}, status=500)
@@ -49,7 +63,15 @@ class SubmissionView(generics.CreateAPIView):
     def perform_create(self, serializer):
         temperature = self.request.data.get('temperature')
         cloud_cover = self.request.data.get('cloud_cover') 
+        wind_speed = self.request.data.get('wind_speed')
+        wind_direction = self.request.data.get('wind_direction')
+        humidity = self.request.data.get('humidity')
+        precipitation = self.request.data.get('precipitation')
         serializer.save(
             temperature=temperature,
-            cloud_cover=cloud_cover
+            cloud_cover=cloud_cover,
+            wind_speed=wind_speed,
+            wind_direction=wind_direction,
+            humidity=humidity,
+            precipitation=precipitation
         )

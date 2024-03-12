@@ -7,3 +7,7 @@ class Submission(models.Model):
     date = models.DateField(default=timezone.now)
     temperature = models.FloatField(max_length=50, null=True)
     cloud_cover = models.CharField(max_length=50, null=True)
+    wind_speed = models.FloatField(max_length=50, null=True)
+    wind_direction = models.CharField(max_length=50, null=True)
+    humidity = models.FloatField(max_length=50, null=True)
+    precipitation = models.CharField(max_length=50, null=True)
