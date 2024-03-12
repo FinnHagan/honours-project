@@ -28,11 +28,8 @@ class WeatherDataView(APIView):
             weather_response = requests.get(weather_api_url)
             if weather_response.status_code == 200:
                 weather_data = weather_response.json()
-                print("Weather Response Data:", weather_data)
-                temperature = float(weather_data['current']['temp'])
-                cloud_cover = str(weather_data['current']['clouds'])
-                print("Extracted temperature before perform_create:", temperature)
-                print("Extracted cloud cover before perform_create:", cloud_cover)
+                temperature = float(weather_data['current']['temp']) - 273.15 # Convert from Kelvin to Celsius
+                cloud_cover = str(weather_data['current']['clouds']) + "%" # Show percentage cloud cover
 
                 return Response({
                     "temperature": temperature,
@@ -50,11 +47,8 @@ class SubmissionView(generics.CreateAPIView):
     serializer_class = SubmissionSerializer
 
     def perform_create(self, serializer):
-        print("Submission Data:", self.request.data)
         temperature = self.request.data.get('temperature')
         cloud_cover = self.request.data.get('cloud_cover') 
-        print("Extracted temperature:", temperature) 
-        print("Extracted cloud cover:", cloud_cover) 
         serializer.save(
             temperature=temperature,
             cloud_cover=cloud_cover
