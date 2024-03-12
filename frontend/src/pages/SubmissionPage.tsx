@@ -15,11 +15,14 @@ interface WeatherData {
 interface SubmissionData extends WeatherData {
     temperature: number | null;
     cloud_cover: string | null;
+    wind_speed: number | null;
+    wind_direction: string | null;
+    humidity: number | null;
+    precipitation: string | null;
 }
 
 //Gets user input from form and sends it to the API
 const fetchWeatherData = async (data: WeatherData) => {
-    console.log("API URL:", `${apiURL}/weatherdata/`)
     return axios.post(`${apiURL}/weatherdata/`, data, {
         headers: { 'Content-Type': 'application/json' },
     });
@@ -65,8 +68,13 @@ const SubmissionPage: React.FC = () => {
                 post_code: formData.postCode,
                 number_of_solar_panels: formData.solarPanels,
                 date: formData.date,
-                temperature: weatherResponse.data.temperature, //Need to get data directly from weather response so it isn't set as null
-                cloud_cover: weatherResponse.data.cloud_cover, //Need to get data directly from weather response so it isn't set as null
+                //Need to get data directly from weather response so it isn't set as null
+                temperature: weatherResponse.data.temperature,
+                cloud_cover: weatherResponse.data.cloud_cover,
+                wind_speed: weatherResponse.data.wind_speed,
+                wind_direction: weatherResponse.data.wind_direction,
+                humidity: weatherResponse.data.humidity,
+                precipitation: weatherResponse.data.precipitation,
             };
             await submitData(submissionData);
             setShowToast(true);
