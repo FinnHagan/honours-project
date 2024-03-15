@@ -3,13 +3,18 @@ import { IonBackButton, IonButton, IonButtons, IonCard, IonCardContent, IonConte
 import axios from 'axios';
 import isValid from "uk-postcode-validator";
 
-const apiURL = "https://api.finnhagan.co.uk/api";
+const apiURL = "http://127.0.0.1:8000/api";
 
 //Define the interfaces for the data being sent to API
 interface WeatherData {
     post_code: string;
     number_of_solar_panels: number;
     date: string;
+}
+
+interface SolarData {
+    solar_altitude: number | null;
+    solar_azimuth: number | null;
 }
 
 interface SubmissionData extends WeatherData {
@@ -19,6 +24,7 @@ interface SubmissionData extends WeatherData {
     wind_direction: string | null;
     humidity: number | null;
     precipitation: string | null;
+    solar: SolarData;
 }
 
 //Gets user input from form and sends it to the API
@@ -27,6 +33,11 @@ const fetchWeatherData = async (data: WeatherData) => {
         headers: { 'Content-Type': 'application/json' },
     });
 };
+const fetchSolarData = async (data: WeatherData) => {
+    return axios.post(`${apiURL}/solardata/`, data, {
+        headers: { 'Content-Type': 'application/json' },
+    });
+}
 
 //Submits the combined data to the API
 const submitData = async (data: SubmissionData) => {
@@ -64,6 +75,7 @@ const SubmissionPage: React.FC = () => {
 
         try {
             const weatherResponse = await fetchWeatherData(data);
+            const solarResponse = await fetchSolarData(data);
             const submissionData = {
                 post_code: formData.postCode,
                 number_of_solar_panels: formData.solarPanels,
@@ -75,6 +87,10 @@ const SubmissionPage: React.FC = () => {
                 wind_direction: weatherResponse.data.wind_direction,
                 humidity: weatherResponse.data.humidity,
                 precipitation: weatherResponse.data.precipitation,
+                solar: {
+                    solar_altitude: solarResponse.data.solar_altitude,
+                    solar_azimuth: solarResponse.data.solar_azimuth,
+                },
             };
             await submitData(submissionData);
             setShowToast(true);

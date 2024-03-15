@@ -13,3 +13,4 @@ mccabe
 pycodestyle
 pyflakes
 requests
+pvlib

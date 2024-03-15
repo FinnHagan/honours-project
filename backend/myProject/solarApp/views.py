@@ -5,6 +5,8 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 import requests
 import os
+from datetime import datetime
+import pvlib
 
 
 class WeatherDataView(APIView):
@@ -54,6 +56,37 @@ class WeatherDataView(APIView):
 
         else:
             return Response({"error": f"Geocoding API error: {geocoding_response.status_code}"}, status=geocoding_response.status_code)
+        
+class SolarDataView(APIView):
+    def post(self, request):
+        post_code = request.data.get('post_code')
+        date = request.data.get('date')
+
+        geocoding_api_url = f"http://api.openweathermap.org/geo/1.0/zip?zip={post_code}&appid={os.environ.get('OPENWEATHERMAP_API_KEY')}"
+        geocoding_response = requests.get(geocoding_api_url)
+
+        if geocoding_response.status_code == 200:
+            geocoding_data = geocoding_response.json()
+
+            if isinstance(geocoding_data, dict):
+                lat = geocoding_data['lat'] 
+                lon = geocoding_data['lon'] 
+            else:
+                lat = geocoding_data[0]['lat'] 
+                lon = geocoding_data[0]['lon']
+
+
+            solar_position = pvlib.solarposition.get_solarposition(date, lat, lon)
+            solar_altitude = solar_position['apparent_elevation']
+            solar_azimuth = solar_position['azimuth']
+
+            return Response({
+                "solar_altitude": solar_altitude,
+                "solar_azimuth": solar_azimuth
+            })
+        else:
+            return Response({"error": f"Geocoding API error: {geocoding_response.status_code}"}, status=geocoding_response.status_code)
+    
 
 
 class SubmissionView(generics.CreateAPIView):
@@ -67,11 +100,15 @@ class SubmissionView(generics.CreateAPIView):
         wind_direction = self.request.data.get('wind_direction')
         humidity = self.request.data.get('humidity')
         precipitation = self.request.data.get('precipitation')
+        solar_altitude = self.request.data.get('solar_altitude')
+        solar_azimuth = self.request.data.get('solar_azimuth')
         serializer.save(
             temperature=temperature,
             cloud_cover=cloud_cover,
             wind_speed=wind_speed,
             wind_direction=wind_direction,
             humidity=humidity,
-            precipitation=precipitation
+            precipitation=precipitation,
+            solar_altitude=solar_altitude,
+            solar_azimuth=solar_azimuth,
         )
