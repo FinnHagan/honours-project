@@ -5,7 +5,6 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 import requests
 import os
-from datetime import datetime
 import pvlib
 
 
@@ -100,8 +99,16 @@ class SubmissionView(generics.CreateAPIView):
         wind_direction = self.request.data.get('wind_direction')
         humidity = self.request.data.get('humidity')
         precipitation = self.request.data.get('precipitation')
-        solar_altitude = self.request.data.get('solar_altitude')
-        solar_azimuth = self.request.data.get('solar_azimuth')
+        # Extract solar data from nested structure
+        solar_data = self.request.data.get('solar', {})
+        solar_altitude = solar_data.get('solar_altitude')
+        solar_azimuth = solar_data.get('solar_azimuth')
+
+        if isinstance(solar_altitude, list):
+            solar_altitude = solar_altitude[0] if solar_altitude else None
+        if isinstance(solar_azimuth, list):
+            solar_azimuth = solar_azimuth[0] if solar_azimuth else None
+
         serializer.save(
             temperature=temperature,
             cloud_cover=cloud_cover,
