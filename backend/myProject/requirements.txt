@@ -14,3 +14,4 @@ pycodestyle
 pyflakes
 requests
 pvlib
+pytz==2024.1

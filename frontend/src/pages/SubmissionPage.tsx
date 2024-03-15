@@ -4,6 +4,7 @@ import axios from 'axios';
 import isValid from "uk-postcode-validator";
 
 const apiURL = "https://api.finnhagan.co.uk/api";
+// const apiURL = "http://127.0.0.1:8000/api";
 
 //Define the interfaces for the data being sent to API
 interface WeatherData {
@@ -144,7 +145,7 @@ const SubmissionPage: React.FC = () => {
                             {formData.solarPanelError && <IonText color="danger"><sub>{formData.solarPanelError}</sub></IonText>}
                             <IonInput className="ion-margin-top" fill="outline" label="Post Code" labelPlacement="floating" required value={formData.postCode} onIonChange={(e) => handleInputChange('postCode', e.detail.value)} />
                             {!formData.isValid && <IonText color="danger"><sub>{formData.postCodeError}</sub></IonText>}
-                            <IonInput className="ion-margin-top" fill="outline" label="Date" labelPlacement="floating" required type="date" placeholder="Date" value={formData.date} onIonChange={(e) => handleInputChange('date', e.detail.value)}></IonInput>
+                            <IonInput className="ion-margin-top" fill="outline" label="Date" labelPlacement="floating" required type="datetime-local" placeholder="Date" value={formData.date} onIonChange={(e) => handleInputChange('date', e.detail.value)}></IonInput>
                             <IonButton disabled={!formData.isValid || formData.solarPanelError !== ''} className="ion-margin-top" expand="block" type="submit" shape="round" color="success">
                                 Submit
                             </IonButton>
