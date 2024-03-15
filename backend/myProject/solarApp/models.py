@@ -11,3 +11,5 @@ class Submission(models.Model):
     wind_direction = models.CharField(max_length=50, null=True)
     humidity = models.FloatField(max_length=50, null=True)
     precipitation = models.CharField(max_length=50, null=True)
+    solar_azimuth = models.FloatField(max_length=50, null=True)
+    solar_altitude = models.FloatField(max_length=50, null=True)
