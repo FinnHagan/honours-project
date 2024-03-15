@@ -6,7 +6,9 @@ from rest_framework.response import Response
 import requests
 import os
 import pvlib
-
+import pandas as pd
+from datetime import datetime
+import pytz
 
 class WeatherDataView(APIView):
     def post(self, request):
@@ -59,23 +61,26 @@ class WeatherDataView(APIView):
 class SolarDataView(APIView):
     def post(self, request):
         post_code = request.data.get('post_code')
-        date = request.data.get('date')
+        datetime_str = request.data.get('date')  # Date comes from frontend as "xxxx-xx-xxTxx:xx"
+
+        naive_datetime_obj = datetime.strptime(datetime_str, '%Y-%m-%dT%H:%M')
+
+        utc_datetime_obj = pytz.utc.localize(naive_datetime_obj)
+
+        # Convert the datetime object to a panda timestamp as requiref for pvlib
+        timestamp = pd.Timestamp(utc_datetime_obj)
 
         geocoding_api_url = f"http://api.openweathermap.org/geo/1.0/zip?zip={post_code}&appid={os.environ.get('OPENWEATHERMAP_API_KEY')}"
         geocoding_response = requests.get(geocoding_api_url)
 
         if geocoding_response.status_code == 200:
             geocoding_data = geocoding_response.json()
+            lat = geocoding_data['lat']
+            lon = geocoding_data['lon']
 
-            if isinstance(geocoding_data, dict):
-                lat = geocoding_data['lat'] 
-                lon = geocoding_data['lon'] 
-            else:
-                lat = geocoding_data[0]['lat'] 
-                lon = geocoding_data[0]['lon']
+            location = pvlib.location.Location(lat, lon, tz='UTC')
+            solar_position = location.get_solarposition(times=timestamp)
 
-
-            solar_position = pvlib.solarposition.get_solarposition(date, lat, lon)
             solar_altitude = solar_position['apparent_elevation']
             solar_azimuth = solar_position['azimuth']
 
@@ -83,8 +88,6 @@ class SolarDataView(APIView):
                 "solar_altitude": solar_altitude,
                 "solar_azimuth": solar_azimuth
             })
-        else:
-            return Response({"error": f"Geocoding API error: {geocoding_response.status_code}"}, status=geocoding_response.status_code)
     
 
 
