@@ -100,6 +100,7 @@ const SubmissionPage: React.FC = () => {
                 wind_direction: weatherResponse.data.wind_direction,
                 humidity: weatherResponse.data.humidity,
                 precipitation: weatherResponse.data.precipitation,
+                //Need to get data directly from solar response so it isn't set as null
                 solar: {
                     solar_altitude: solarResponse.data.solar_altitude,
                     solar_azimuth: solarResponse.data.solar_azimuth,
