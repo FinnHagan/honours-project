@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { IonBackButton, IonButton, IonButtons, IonCard, IonCardContent, IonContent, IonHeader, IonInput, IonPage, IonTitle, IonToolbar, IonText, IonLoading, IonToast } from '@ionic/react';
 import axios from 'axios';
 import isValid from "uk-postcode-validator";
 
-const apiURL = "https://api.finnhagan.co.uk/api";
-// const apiURL = "http://127.0.0.1:8000/api";
+// const apiURL = "https://api.finnhagan.co.uk/api";
+const apiURL = "http://127.0.0.1:8000/api";
 
 //Define the interfaces for the data being sent to API
 interface WeatherData {
@@ -66,6 +66,27 @@ const SubmissionPage: React.FC = () => {
     const [isLoading, setIsLoading] = useState(false);
     const [showToast, setShowToast] = useState(false);
 
+    const [applianceData, setApplianceData] = useState({ washing_machine_data: '{}', tumble_dryer_data: '{}' });
+
+
+    useEffect(() => {
+        // Fetch appliance data
+        const fetchApplianceData = async () => {
+            try {
+                const wmResponse = await axios.get(`${apiURL}/washingmachinedata/`);
+                const tdResponse = await axios.get(`${apiURL}/tumbledryerdata/`);
+                setApplianceData({
+                    washing_machine_data: JSON.stringify(wmResponse.data),
+                    tumble_dryer_data: JSON.stringify(tdResponse.data),
+                });
+            } catch (error) {
+                console.error("Error fetching appliance data:", error);
+            }
+        };
+
+        fetchApplianceData();
+    }, []);
+
     const handleSubmit = async (event: any) => {
         event.preventDefault();
 
@@ -106,6 +127,8 @@ const SubmissionPage: React.FC = () => {
                     solar_azimuth: solarResponse.data.solar_azimuth,
                     solar_irradiance: solarResponse.data.solar_irradiance,
                 },
+                washing_machine_data: applianceData.washing_machine_data,
+                tumble_dryer_data: applianceData.tumble_dryer_data,
             };
             await submitData(submissionData);
             setShowToast(true);

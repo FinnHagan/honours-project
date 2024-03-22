@@ -14,7 +14,6 @@ import pvlib.irradiance
 import pandas as pd
 from datetime import datetime
 import pytz
-from django.http import JsonResponse
 
 def get_lat_lon_from_post_code(post_code):
     geocoding_api_key = os.environ.get('OPENWEATHERMAP_API_KEY')
@@ -40,12 +39,12 @@ def fetch_weather_data(lat, lon):
             "wind_speed": weather_data['current']['wind_speed'],
             "wind_direction": weather_data['current']['wind_deg'],
             "humidity": weather_data['current']['humidity'],
-            "precipitation": weather_data['current'].get('rain', {'1h': 0.0})['1h'] +
-                             weather_data['current'].get('snow', {'1h': 0.0})['1h'],  # Sum rain and snow
+            "precipitation": weather_data['current'].get('rain', {'1h': 0.0})['1h'] + weather_data['current'].get('snow', {'1h': 0.0})['1h'],  # Sum rain and snow
         }
     else:
         return {"error": "Error fetching weather data", "status": weather_response.status_code}
-    
+
+
 def fetch_solar_data(lat, lon, panel_orientation, panel_tilt, date):
     url = f"https://re.jrc.ec.europa.eu/api/DRcalc?lat={lat}&lon={lon}&month={date.month}&global=1&outputformat=json"
     solar_response = requests.get(url)
@@ -58,18 +57,17 @@ def fetch_solar_data(lat, lon, panel_orientation, panel_tilt, date):
         return ghi, dni, dhi
     else:
         raise Exception(f"Error fetching solar data: {solar_response.status_code}")
-    
+
+
 class WeatherDataView(APIView):
     def post(self, request):
         post_code = request.data.get('post_code')
         lat, lon = get_lat_lon_from_post_code(post_code)
         if lat is None or lon is None:
             return Response({"error": "Failed to fetch latitude and longitude"}, status=400)
-        
         weather_data = fetch_weather_data(lat, lon)
         if "error" in weather_data:
             return Response(weather_data, status=weather_data["status"])
-        
         return Response(weather_data)
 
 
@@ -130,6 +128,40 @@ class SolarDataView(APIView):
         })
 
 
+class WashingMachineView(APIView):
+
+    def get(self, request):
+        washing_machine_data = {
+            "wm_average_consumption_per_day": [
+                {"DayOfWeek": "Monday", "Total Consumption (Wh)": 2454.541},
+                {"DayOfWeek": "Tuesday", "Total Consumption (Wh)": 2423.344444444445},
+                {"DayOfWeek": "Wednesday", "Total Consumption (Wh)": 2349.898},
+                {"DayOfWeek": "Thursday", "Total Consumption (Wh)": 2273.549090909091},
+                {"DayOfWeek": "Friday", "Total Consumption (Wh)": 2465.499090909091},
+                {"DayOfWeek": "Saturday", "Total Consumption (Wh)": 2556.389},
+                {"DayOfWeek": "Sunday", "Total Consumption (Wh)": 2153.3959999999997}
+            ],
+            "wm_highest_consumption_day": {"DayOfWeek": "Saturday", "Total Consumption (Wh)": 2556.389},
+            "wm_lowest_consumption_day": {"DayOfWeek": "Sunday", "Total Consumption (Wh)": 2153.3959999999997}
+        }
+        return Response(washing_machine_data)
+        
+class TumbleDryerView(APIView):
+    def get(self, request):
+        tumble_dryer_data = {
+            "td_average_consumption_per_day": [
+                {"DayOfWeek": "Monday", "Total Consumption (Wh)": 2928.954},
+                {"DayOfWeek": "Tuesday", "Total Consumption (Wh)": 2423.344444444445},
+                {"DayOfWeek": "Wednesday", "Total Consumption (Wh)": 1994.816},
+                {"DayOfWeek": "Thursday", "Total Consumption (Wh)": 0.398},
+                {"DayOfWeek": "Friday", "Total Consumption (Wh)": 0.005},
+                {"DayOfWeek": "Saturday", "Total Consumption (Wh)": 846.7675},
+                {"DayOfWeek": "Sunday", "Total Consumption (Wh)": 0}
+            ],
+            "td_highest_consumption_day": {"DayOfWeek": "Monday", "Total Consumption (Wh)": 2928.954},
+            "td_lowest_consumption_day": {"DayOfWeek": "Sunday", "Total Consumption (Wh)": 0}
+        }
+        return Response(tumble_dryer_data)
 
 class SubmissionView(generics.CreateAPIView):
     queryset = Submission.objects.all()
@@ -153,6 +185,10 @@ class SubmissionView(generics.CreateAPIView):
             solar_azimuth = solar_azimuth[0] if solar_azimuth else None
 
         solar_irradiance = solar_data.get('solar_irradiance')
+
+        washing_machine_data=self.request.data.get('washing_machine_data', '{}')
+        tumble_dryer_data=self.request.data.get('tumble_dryer_data', '{}')
+
         serializer.save(
             temperature=temperature,
             cloud_cover=cloud_cover,
@@ -163,4 +199,6 @@ class SubmissionView(generics.CreateAPIView):
             solar_altitude=solar_altitude,
             solar_azimuth=solar_azimuth,
             solar_irradiance=solar_irradiance,
+            washing_machine_data=washing_machine_data,
+            tumble_dryer_data=tumble_dryer_data,
         )

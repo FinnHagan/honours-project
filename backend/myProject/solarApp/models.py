@@ -17,3 +17,5 @@ class Submission(models.Model):
     solar_azimuth = models.FloatField(max_length=50, null=True)
     solar_altitude = models.FloatField(max_length=50, null=True)
     solar_irradiance = models.FloatField(max_length=50, null=True)
+    washing_machine_data = models.TextField(null=True)
+    tumble_dryer_data = models.TextField(null=True)
