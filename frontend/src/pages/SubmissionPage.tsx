@@ -3,8 +3,8 @@ import { IonBackButton, IonButton, IonButtons, IonCard, IonCardContent, IonConte
 import axios from 'axios';
 import isValid from "uk-postcode-validator";
 
-// const apiURL = "https://api.finnhagan.co.uk/api";
-const apiURL = "http://127.0.0.1:8000/api";
+const apiURL = "https://api.finnhagan.co.uk/api";
+// const apiURL = "http://127.0.0.1:8000/api";
 
 //Define the interfaces for the data being sent to API
 interface WeatherData {
