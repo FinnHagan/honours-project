@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { IonBackButton, IonButton, IonButtons, IonCard, IonCardContent, IonContent, IonHeader, IonInput, IonPage, IonTitle, IonToolbar, IonText, IonLoading, IonToast } from '@ionic/react';
+import { IonBackButton, IonButton, IonButtons, IonCard, IonCardContent, IonContent, IonHeader, IonInput, IonPage, IonTitle, IonToolbar, IonText, IonLoading, IonToast, IonCheckbox, IonList, IonItem, IonLabel, IonRow } from '@ionic/react';
 import axios from 'axios';
 import isValid from "uk-postcode-validator";
 
@@ -11,8 +11,12 @@ interface WeatherData {
     post_code: string;
     number_of_solar_panels: number;
     date: string;
-    panel_orientation: number | null;
-    panel_tilt: number | null;
+    panel_orientation: number;
+    panel_tilt: number;
+    appliances: {
+        washingMachine: boolean;
+        tumbleDryer: boolean;
+    };
 }
 
 interface SolarData {
@@ -54,20 +58,22 @@ const SubmissionPage: React.FC = () => {
     const [formData, setFormData] = useState({
         postCode: '',
         solarPanels: 1,
-        panelOrientation: null,
-        panelTilt: null,
+        panelOrientation: 0,
+        panelTilt: 0,
         date: '',
         isValid: true,
         postCodeError: '',
         solarPanelError: '',
         panelOrientationError: '',
         panelTiltError: '',
+
     });
     const [isLoading, setIsLoading] = useState(false);
     const [showToast, setShowToast] = useState(false);
 
     const [applianceData, setApplianceData] = useState({ washing_machine_data: '{}', tumble_dryer_data: '{}' });
-
+    const [isWashingMachineSelected, setIsWashingMachineSelected] = useState(false);
+    const [isTumbleDryerSelected, setIsTumbleDryerSelected] = useState(false);
 
     useEffect(() => {
         // Fetch appliance data
@@ -100,9 +106,12 @@ const SubmissionPage: React.FC = () => {
             date: formData.date,
             panel_orientation: formData.panelOrientation,
             panel_tilt: formData.panelTilt,
+            appliances: {
+                washingMachine: isWashingMachineSelected,
+                tumbleDryer: isTumbleDryerSelected
+            }
         };
 
-        console.log("Data to be sent to API:", data);
         setIsLoading(true);
 
         try {
@@ -129,6 +138,10 @@ const SubmissionPage: React.FC = () => {
                 },
                 washing_machine_data: applianceData.washing_machine_data,
                 tumble_dryer_data: applianceData.tumble_dryer_data,
+                appliances: {
+                    washingMachine: isWashingMachineSelected,
+                    tumbleDryer: isTumbleDryerSelected,
+                },
             };
             await submitData(submissionData);
             setShowToast(true);
@@ -158,21 +171,32 @@ const SubmissionPage: React.FC = () => {
             });
 
         } else if (name === 'panelOrientation') {
-            const valid = !isNaN(value) && value >= 0 && value <= 360;
+            const parsedValue = parseFloat(value);
+            const valid = !isNaN(parsedValue) && parsedValue >= 0 && parsedValue <= 360;
             setFormData({
                 ...formData,
-                [name]: value,
+                [name]: parsedValue,
                 panelOrientationError: valid ? '' : "Please enter a valid orientation (0-360 degrees).",
             });
         } else if (name === 'panelTilt') {
-            const valid = !isNaN(value) && value >= 0 && value <= 90;
+            const parsedValue = parseFloat(value);
+            const valid = !isNaN(parsedValue) && parsedValue >= 0 && parsedValue <= 90;
             setFormData({
                 ...formData,
-                [name]: value,
+                [name]: parsedValue,
                 panelTiltError: valid ? '' : "Please enter a valid tilt angle (0-90 degrees).",
             });
-        } else {
+        }
+        else {
             setFormData({ ...formData, [name]: value });
+        }
+    };
+
+    const handleCheckboxChange = (name: string, isChecked: boolean) => {
+        if (name === 'washingMachine') {
+            setIsWashingMachineSelected(isChecked);
+        } else if (name === 'tumbleDryer') {
+            setIsTumbleDryerSelected(isChecked);
         }
     };
 
@@ -193,23 +217,26 @@ const SubmissionPage: React.FC = () => {
                         <IonLoading isOpen={isLoading} message="Submission in progress... calculating optimal time " />
                         <IonToast isOpen={showToast} onDidDismiss={() => setShowToast(false)} message="Submission successful!" color="success" duration={3000} />
                         <form onSubmit={handleSubmit}>
-                            <IonInput fill="outline" label="Number of Solar Panels" required labelPlacement="floating" type="number" value={formData.solarPanels.toString()} onIonChange={(e) => handleInputChange('solarPanels', parseInt(e.detail.value ?? '0', 10))} min="1" step="1" />
+                            <IonInput fill="outline" label="Number of Solar Panels" required labelPlacement="floating" type="number" placeholder="Enter the number of solar panels installed" value={formData.solarPanels.toString()} onIonChange={(e) => handleInputChange('solarPanels', parseInt(e.detail.value ?? '0', 10))} min="1" />
                             {formData.solarPanelError && <IonText className='ion-margin-top' color="danger"><sub>{formData.solarPanelError}</sub></IonText>}
-                            <IonInput className="ion-margin-top" fill="outline" label="Panel Orientation" labelPlacement="floating" required type="number" placeholder="Degrees from North (e.g., 180)" value={formData.panelOrientation ?? ''} onIonChange={(e) => handleInputChange('panelOrientation', e.detail.value ? parseFloat(e.detail.value) : null)} min="0" max="360" step="15" />
+                            <IonInput className="ion-margin-top" fill="outline" label="Panel Orientation" labelPlacement="floating" required type="number" placeholder="Degrees from North (e.g., 180)" value={formData.panelOrientation ?? ''} onIonChange={(e) => handleInputChange('panelOrientation', e.detail.value ? parseFloat(e.detail.value) : null)} min="0" max="360" />
                             {formData.panelOrientationError && <IonText className='ion-margin-top' color="danger"><sub>{formData.panelOrientationError}</sub></IonText>}
-                            <IonInput className="ion-margin-top" fill="outline" label="Panel Tilt Angle" labelPlacement="floating" required type="number" placeholder="Angle in degrees (e.g., 30)" value={formData.panelTilt ?? ''} onIonChange={(e) => handleInputChange('panelTilt', e.detail.value ? parseFloat(e.detail.value) : null)} min="0" max="90" step="15" />
+                            <IonInput className="ion-margin-top" fill="outline" label="Panel Tilt Angle" labelPlacement="floating" required type="number" placeholder="Angle in degrees (e.g., 30)" value={formData.panelTilt ?? ''} onIonChange={(e) => handleInputChange('panelTilt', e.detail.value ? parseFloat(e.detail.value) : null)} min="0" max="90" />
                             {formData.panelTiltError && <IonText className='ion-margin-top' color="danger"><sub>{formData.panelTiltError}</sub></IonText>}
                             <IonInput className="ion-margin-top" fill="outline" label="Post Code" labelPlacement="floating" required value={formData.postCode} placeholder='Enter a UK post code' onIonChange={(e) => handleInputChange('postCode', e.detail.value)} />
                             {!formData.isValid && <IonText className='ion-margin-top' color="danger"><sub>{formData.postCodeError}</sub></IonText>}
                             <IonInput className="ion-margin-top" fill="outline" label="Date" labelPlacement="floating" required type="datetime-local" placeholder="Date" value={formData.date} onIonChange={(e) => handleInputChange('date', e.detail.value)}></IonInput>
-                            <IonButton disabled={!formData.isValid || formData.solarPanelError !== ''} className="ion-margin-top" expand="block" type="submit" shape="round" color="success">
+                            <IonCheckbox className='ion-margin-top' onIonChange={(e) => handleCheckboxChange('washingMachine', e.detail.checked)} checked={isWashingMachineSelected}>Washing Machine</IonCheckbox>
+                            <IonRow className='ion-justify-content-between ion-align-items-center ion-margin-top'></IonRow>
+                            <IonCheckbox className='ion-margin-top' checked={isTumbleDryerSelected} onIonChange={e => handleCheckboxChange('tumbleDryer', e.detail.checked)}>Tumble Dryer</IonCheckbox>
+                            <IonButton className="ion-margin-top" disabled={!formData.isValid || formData.solarPanelError !== '' || formData.panelOrientationError !== '' || formData.panelTiltError !== '' || !isWashingMachineSelected && !isTumbleDryerSelected} expand="block" type="submit" shape="round" color="success">
                                 Submit
                             </IonButton>
                         </form>
                     </IonCardContent>
                 </IonCard>
             </IonContent>
-        </IonPage>
+        </IonPage >
     );
 };
 
