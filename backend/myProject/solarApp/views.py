@@ -81,6 +81,7 @@ class SolarDataView(APIView):
 
         # Convert datetime string to actual datetime
         input_date = datetime.strptime(datetime_str, '%Y-%m-%dT%H:%M')
+        input_date = input_date.replace(hour=0, minute=0)
         utc_date = pytz.utc.localize(input_date)
 
         # Fetch latitude and longitude from post code
@@ -95,13 +96,10 @@ class SolarDataView(APIView):
             return Response({"error": str(e)}, status=500)
 
         location = pvlib.location.Location(lat, lon, tz='UTC')
-        times = pd.date_range(start=input_date, periods=1, freq='1h', tz='UTC')
+        times = pd.date_range(start=input_date, periods=24, freq='1h', tz='UTC')
         solar_position = location.get_solarposition(times=utc_date)
-        airmass = location.get_airmass(solar_position=solar_position, times=times)
-        linke_turbidity = pvlib.clearsky.lookup_linke_turbidity(times, lat, lon)
 
         # Create a DataFrame for weather data
-        times = pd.date_range(start=utc_date, periods=24, freq='h', tz='UTC')
         weather = pd.DataFrame({'ghi': ghi, 'dni': dni, 'dhi': dhi}, index=times)
 
         # Initialize PV system and ModelChain
@@ -112,6 +110,7 @@ class SolarDataView(APIView):
                           module_parameters=module_parameters,
                           inverter_parameters=inverter_parameters,
                           temperature_model_parameters=temperature_model_parameters)
+        
         location = Location(lat, lon, tz='UTC')
         mc = ModelChain(system, location, aoi_model='no_loss', spectral_model='no_loss',)
 
@@ -120,11 +119,14 @@ class SolarDataView(APIView):
 
         # Calculate AC power output
         ac_power = mc.results.ac * number_of_solar_panels
+        optimal_hour = ac_power.idxmax()
 
         return Response({
             "solar_altitude": solar_position['apparent_elevation'].iloc[0],
             "solar_azimuth": solar_position['azimuth'].iloc[0],
-            "solar_irradiance": ac_power.sum()
+            "daily_solar_output": ac_power.sum(),
+            "optimal_time": optimal_hour.strftime('%Y-%m-%d %H:%M'),
+            "optimal_power": ac_power.max(),
         })
 
 
@@ -184,7 +186,9 @@ class SubmissionView(generics.CreateAPIView):
         if isinstance(solar_azimuth, list):
             solar_azimuth = solar_azimuth[0] if solar_azimuth else None
 
-        solar_irradiance = solar_data.get('solar_irradiance')
+        daily_solar_output = solar_data.get('daily_solar_output')
+        optimal_time = solar_data.get('optimal_time')
+        optimal_power = solar_data.get('optimal_power')
 
         washing_machine_data=self.request.data.get('washing_machine_data', '{}')
         tumble_dryer_data=self.request.data.get('tumble_dryer_data', '{}')
@@ -198,7 +202,9 @@ class SubmissionView(generics.CreateAPIView):
             precipitation=precipitation,
             solar_altitude=solar_altitude,
             solar_azimuth=solar_azimuth,
-            solar_irradiance=solar_irradiance,
+            daily_solar_output=daily_solar_output,
+            optimal_time=optimal_time,
+            optimal_power=optimal_power,
             washing_machine_data=washing_machine_data,
             tumble_dryer_data=tumble_dryer_data,
         )

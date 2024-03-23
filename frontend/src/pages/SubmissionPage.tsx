@@ -3,8 +3,8 @@ import { IonBackButton, IonButton, IonButtons, IonCard, IonCardContent, IonConte
 import axios from 'axios';
 import isValid from "uk-postcode-validator";
 
-const apiURL = "https://api.finnhagan.co.uk/api";
-// const apiURL = "http://127.0.0.1:8000/api";
+// const apiURL = "https://api.finnhagan.co.uk/api";
+const apiURL = "http://127.0.0.1:8000/api";
 
 //Define the interfaces for the data being sent to API
 interface WeatherData {
@@ -22,7 +22,9 @@ interface WeatherData {
 interface SolarData {
     solar_altitude: number | null;
     solar_azimuth: number | null;
-    solar_irradiance: number | null;
+    daily_solar_output: number | null;
+    optimal_time: string | null;
+    optimal_power: number | null;
 }
 
 interface SubmissionData extends WeatherData {
@@ -134,7 +136,9 @@ const SubmissionPage: React.FC = () => {
                 solar: {
                     solar_altitude: solarResponse.data.solar_altitude,
                     solar_azimuth: solarResponse.data.solar_azimuth,
-                    solar_irradiance: solarResponse.data.solar_irradiance,
+                    daily_solar_output: solarResponse.data.daily_solar_output,
+                    optimal_time: solarResponse.data.optimal_time,
+                    optimal_power: solarResponse.data.optimal_power,
                 },
                 washing_machine_data: applianceData.washing_machine_data,
                 tumble_dryer_data: applianceData.tumble_dryer_data,
