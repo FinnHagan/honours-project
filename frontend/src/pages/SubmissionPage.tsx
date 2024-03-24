@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { IonBackButton, IonButton, IonButtons, IonCard, IonCardContent, IonContent, IonHeader, IonInput, IonPage, IonTitle, IonToolbar, IonText, IonLoading, IonToast, IonCheckbox, IonList, IonItem, IonLabel, IonRow } from '@ionic/react';
 import axios from 'axios';
 import isValid from "uk-postcode-validator";
@@ -13,10 +13,8 @@ interface WeatherData {
     date: string;
     panel_orientation: number;
     panel_tilt: number;
-    appliances: {
-        washingMachine: boolean;
-        tumbleDryer: boolean;
-    };
+    washing_machine_selected: boolean;
+    tumble_dryer_selected: boolean;
 }
 
 interface SolarData {
@@ -25,6 +23,12 @@ interface SolarData {
     daily_solar_output: number | null;
     optimal_time: string | null;
     optimal_power: number | null;
+    optimal_usage: OptimalUsageData;
+}
+
+interface OptimalUsageData {
+    washing_machine?: string[];
+    tumble_dryer?: string[];
 }
 
 interface SubmissionData extends WeatherData {
@@ -73,27 +77,9 @@ const SubmissionPage: React.FC = () => {
     const [isLoading, setIsLoading] = useState(false);
     const [showToast, setShowToast] = useState(false);
 
-    const [applianceData, setApplianceData] = useState({ washing_machine_data: '{}', tumble_dryer_data: '{}' });
     const [isWashingMachineSelected, setIsWashingMachineSelected] = useState(false);
     const [isTumbleDryerSelected, setIsTumbleDryerSelected] = useState(false);
 
-    useEffect(() => {
-        // Fetch appliance data
-        const fetchApplianceData = async () => {
-            try {
-                const wmResponse = await axios.get(`${apiURL}/washingmachinedata/`);
-                const tdResponse = await axios.get(`${apiURL}/tumbledryerdata/`);
-                setApplianceData({
-                    washing_machine_data: JSON.stringify(wmResponse.data),
-                    tumble_dryer_data: JSON.stringify(tdResponse.data),
-                });
-            } catch (error) {
-                console.error("Error fetching appliance data:", error);
-            }
-        };
-
-        fetchApplianceData();
-    }, []);
 
     const handleSubmit = async (event: any) => {
         event.preventDefault();
@@ -108,10 +94,9 @@ const SubmissionPage: React.FC = () => {
             date: formData.date,
             panel_orientation: formData.panelOrientation,
             panel_tilt: formData.panelTilt,
-            appliances: {
-                washingMachine: isWashingMachineSelected,
-                tumbleDryer: isTumbleDryerSelected
-            }
+            washing_machine_selected: isWashingMachineSelected,
+            tumble_dryer_selected: isTumbleDryerSelected,
+
         };
 
         setIsLoading(true);
@@ -125,6 +110,9 @@ const SubmissionPage: React.FC = () => {
                 date: formData.date,
                 panel_orientation: formData.panelOrientation,
                 panel_tilt: formData.panelTilt,
+                washing_machine_selected: data.washing_machine_selected,
+                tumble_dryer_selected: data.tumble_dryer_selected,
+
                 //Need to get data directly from weather response so it isn't set as null
                 temperature: weatherResponse.data.temperature,
                 cloud_cover: weatherResponse.data.cloud_cover,
@@ -139,12 +127,7 @@ const SubmissionPage: React.FC = () => {
                     daily_solar_output: solarResponse.data.daily_solar_output,
                     optimal_time: solarResponse.data.optimal_time,
                     optimal_power: solarResponse.data.optimal_power,
-                },
-                washing_machine_data: applianceData.washing_machine_data,
-                tumble_dryer_data: applianceData.tumble_dryer_data,
-                appliances: {
-                    washingMachine: isWashingMachineSelected,
-                    tumbleDryer: isTumbleDryerSelected,
+                    optimal_usage: solarResponse.data.optimal_usage,
                 },
             };
             await submitData(submissionData);
@@ -197,9 +180,9 @@ const SubmissionPage: React.FC = () => {
     };
 
     const handleCheckboxChange = (name: string, isChecked: boolean) => {
-        if (name === 'washingMachine') {
+        if (name === 'washing_machine_selected') {
             setIsWashingMachineSelected(isChecked);
-        } else if (name === 'tumbleDryer') {
+        } else if (name === 'tumble_dryer_selected') {
             setIsTumbleDryerSelected(isChecked);
         }
     };
@@ -230,9 +213,9 @@ const SubmissionPage: React.FC = () => {
                             <IonInput className="ion-margin-top" fill="outline" label="Post Code" labelPlacement="floating" required value={formData.postCode} placeholder='Enter a UK post code' onIonChange={(e) => handleInputChange('postCode', e.detail.value)} />
                             {!formData.isValid && <IonText className='ion-margin-top' color="danger"><sub>{formData.postCodeError}</sub></IonText>}
                             <IonInput className="ion-margin-top" fill="outline" label="Date" labelPlacement="floating" required type="datetime-local" placeholder="Date" value={formData.date} onIonChange={(e) => handleInputChange('date', e.detail.value)}></IonInput>
-                            <IonCheckbox className='ion-margin-top' onIonChange={(e) => handleCheckboxChange('washingMachine', e.detail.checked)} checked={isWashingMachineSelected}>Washing Machine</IonCheckbox>
+                            <IonCheckbox className='ion-margin-top' checked={isWashingMachineSelected} onIonChange={(e) => handleCheckboxChange('washing_machine_selected', e.detail.checked)}>Washing Machine</IonCheckbox>
                             <IonRow className='ion-justify-content-between ion-align-items-center ion-margin-top'></IonRow>
-                            <IonCheckbox className='ion-margin-top' checked={isTumbleDryerSelected} onIonChange={e => handleCheckboxChange('tumbleDryer', e.detail.checked)}>Tumble Dryer</IonCheckbox>
+                            <IonCheckbox className='ion-margin-top' checked={isTumbleDryerSelected} onIonChange={e => handleCheckboxChange('tumble_dryer_selected', e.detail.checked)}>Tumble Dryer</IonCheckbox>
                             <IonButton className="ion-margin-top" disabled={!formData.isValid || formData.solarPanelError !== '' || formData.panelOrientationError !== '' || formData.panelTiltError !== '' || !isWashingMachineSelected && !isTumbleDryerSelected} expand="block" type="submit" shape="round" color="success">
                                 Submit
                             </IonButton>

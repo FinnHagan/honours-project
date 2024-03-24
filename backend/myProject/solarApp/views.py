@@ -14,6 +14,8 @@ import pvlib.irradiance
 import pandas as pd
 from datetime import datetime
 import pytz
+from .models import Appliance
+
 
 def get_lat_lon_from_post_code(post_code):
     geocoding_api_key = os.environ.get('OPENWEATHERMAP_API_KEY')
@@ -78,6 +80,8 @@ class SolarDataView(APIView):
         panel_orientation = float(request.data.get('panel_orientation'))
         panel_tilt = float(request.data.get('panel_tilt'))
         number_of_solar_panels = int(request.data.get('number_of_solar_panels'))
+        washing_machine_selected = request.data.get('washing_machine_selected')
+        tumble_dryer_selected = request.data.get('tumble_dryer_selected')
 
         # Convert datetime string to actual datetime
         input_date = datetime.strptime(datetime_str, '%Y-%m-%dT%H:%M')
@@ -110,16 +114,29 @@ class SolarDataView(APIView):
                           module_parameters=module_parameters,
                           inverter_parameters=inverter_parameters,
                           temperature_model_parameters=temperature_model_parameters)
-        
+
         location = Location(lat, lon, tz='UTC')
         mc = ModelChain(system, location, aoi_model='no_loss', spectral_model='no_loss',)
 
         # Run model
         mc.run_model(weather)
-
         # Calculate AC power output
         ac_power = mc.results.ac * number_of_solar_panels
+
         optimal_hour = ac_power.idxmax()
+
+        optimal_usage = {}
+        if washing_machine_selected:
+            wm_data = self.get_appliance_data('washing_machine')
+            wm_optimal_time = self.calculate_optimal_time(ac_power, wm_data)
+            if wm_optimal_time:
+                optimal_usage['washing_machine'] = wm_optimal_time
+
+        if tumble_dryer_selected:
+            td_data = self.get_appliance_data('tumble_dryer')
+            td_optimal_time = self.calculate_optimal_time(ac_power, td_data)
+            if td_optimal_time:
+                optimal_usage['tumble_dryer'] = td_optimal_time
 
         return Response({
             "solar_altitude": solar_position['apparent_elevation'].iloc[0],
@@ -127,49 +144,61 @@ class SolarDataView(APIView):
             "daily_solar_output": ac_power.sum(),
             "optimal_time": optimal_hour.strftime('%Y-%m-%d %H:%M'),
             "optimal_power": ac_power.max(),
+            "optimal_usage": optimal_usage,
         })
+
+    def get_appliance_data(self, appliance_name):
+        appliances = Appliance.objects.filter(name=appliance_name)
+        if appliances.exists():
+            total_consumption = sum([appliance.total_consumption_wh for appliance in appliances])
+            average_consumption = total_consumption / appliances.count()
+            return average_consumption
+        else:
+            print(f"No consumption data found for {appliance_name}")
+            return 0
+
+    def calculate_optimal_time(self, ac_power, consumption):
+        if consumption > 0:  # Ensure there's a real consumption value
+            optimal_hour = ac_power.idxmax()  # Find the hour with the maximum generation
+            optimal_hours = [optimal_hour.strftime('%Y-%m-%d %H:%M')]
+        else:
+            optimal_hours = []
+
+        return optimal_hours
 
 
 class WashingMachineView(APIView):
 
     def get(self, request):
-        washing_machine_data = {
-            "wm_average_consumption_per_day": [
-                {"DayOfWeek": "Monday", "Total Consumption (Wh)": 2454.541},
-                {"DayOfWeek": "Tuesday", "Total Consumption (Wh)": 2423.344444444445},
-                {"DayOfWeek": "Wednesday", "Total Consumption (Wh)": 2349.898},
-                {"DayOfWeek": "Thursday", "Total Consumption (Wh)": 2273.549090909091},
-                {"DayOfWeek": "Friday", "Total Consumption (Wh)": 2465.499090909091},
-                {"DayOfWeek": "Saturday", "Total Consumption (Wh)": 2556.389},
-                {"DayOfWeek": "Sunday", "Total Consumption (Wh)": 2153.3959999999997}
-            ],
-            "wm_highest_consumption_day": {"DayOfWeek": "Saturday", "Total Consumption (Wh)": 2556.389},
-            "wm_lowest_consumption_day": {"DayOfWeek": "Sunday", "Total Consumption (Wh)": 2153.3959999999997}
+        washing_machine_data = list(Appliance.objects.filter(name="washing_machine").values('day_of_week', 'total_consumption_wh'))
+        data = {
+            "wm_average_consumption_per_day": washing_machine_data,
+            "wm_highest_consumption_day": max(washing_machine_data, key=lambda x: x['total_consumption_wh']),
+            "wm_lowest_consumption_day": min(washing_machine_data, key=lambda x: x['total_consumption_wh'])
         }
-        return Response(washing_machine_data)
-        
+        return Response(data)
+
+
 class TumbleDryerView(APIView):
+
     def get(self, request):
-        tumble_dryer_data = {
-            "td_average_consumption_per_day": [
-                {"DayOfWeek": "Monday", "Total Consumption (Wh)": 2928.954},
-                {"DayOfWeek": "Tuesday", "Total Consumption (Wh)": 2423.344444444445},
-                {"DayOfWeek": "Wednesday", "Total Consumption (Wh)": 1994.816},
-                {"DayOfWeek": "Thursday", "Total Consumption (Wh)": 0.398},
-                {"DayOfWeek": "Friday", "Total Consumption (Wh)": 0.005},
-                {"DayOfWeek": "Saturday", "Total Consumption (Wh)": 846.7675},
-                {"DayOfWeek": "Sunday", "Total Consumption (Wh)": 0}
-            ],
-            "td_highest_consumption_day": {"DayOfWeek": "Monday", "Total Consumption (Wh)": 2928.954},
-            "td_lowest_consumption_day": {"DayOfWeek": "Sunday", "Total Consumption (Wh)": 0}
+        tumble_dryer_data = list(Appliance.objects.filter(name="tumble_dryer").values('day_of_week', 'total_consumption_wh'))
+        data = {
+            "td_average_consumption_per_day": tumble_dryer_data,
+            "td_highest_consumption_day": max(tumble_dryer_data, key=lambda x: x['total_consumption_wh']),
+            "td_lowest_consumption_day": min(tumble_dryer_data, key=lambda x: x['total_consumption_wh'])
         }
-        return Response(tumble_dryer_data)
+        return Response(data)
+
 
 class SubmissionView(generics.CreateAPIView):
     queryset = Submission.objects.all()
     serializer_class = SubmissionSerializer
 
     def perform_create(self, serializer):
+        print("Received submission data: ", self.request.data)
+        print("Optimal usage in received data: ", self.request.data.get('optimal_usage', 'Not found'))
+        super().perform_create(serializer)
         temperature = self.request.data.get('temperature')
         cloud_cover = self.request.data.get('cloud_cover')
         wind_speed = self.request.data.get('wind_speed')
@@ -189,9 +218,7 @@ class SubmissionView(generics.CreateAPIView):
         daily_solar_output = solar_data.get('daily_solar_output')
         optimal_time = solar_data.get('optimal_time')
         optimal_power = solar_data.get('optimal_power')
-
-        washing_machine_data=self.request.data.get('washing_machine_data', '{}')
-        tumble_dryer_data=self.request.data.get('tumble_dryer_data', '{}')
+        optimal_usage = solar_data.get('optimal_usage')
 
         serializer.save(
             temperature=temperature,
@@ -205,6 +232,5 @@ class SubmissionView(generics.CreateAPIView):
             daily_solar_output=daily_solar_output,
             optimal_time=optimal_time,
             optimal_power=optimal_power,
-            washing_machine_data=washing_machine_data,
-            tumble_dryer_data=tumble_dryer_data,
+            optimal_usage=optimal_usage,
         )
