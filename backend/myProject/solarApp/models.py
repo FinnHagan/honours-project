@@ -8,6 +8,8 @@ class Submission(models.Model):
     date = models.DateTimeField(default=timezone.now)
     panel_orientation = models.FloatField(max_length=50, null=True)
     panel_tilt = models.FloatField(max_length=50, null=True)
+    washing_machine_selected = models.BooleanField(default=False)
+    tumble_dryer_selected = models.BooleanField(default=False)
     temperature = models.FloatField(max_length=50, null=True)
     cloud_cover = models.CharField(max_length=50, null=True)
     wind_speed = models.FloatField(max_length=50, null=True)
@@ -17,7 +19,15 @@ class Submission(models.Model):
     solar_azimuth = models.FloatField(max_length=50, null=True)
     solar_altitude = models.FloatField(max_length=50, null=True)
     daily_solar_output = models.FloatField(max_length=50, null=True)
-    optimal_time = models.DateTimeField(default=timezone.now)
+    optimal_time = models.DateTimeField(default=timezone.now, null=True)
     optimal_power = models.FloatField(max_length=50, null=True)
-    washing_machine_data = models.TextField(null=True)
-    tumble_dryer_data = models.TextField(null=True)
+    optimal_usage = models.JSONField(null=True, blank=True)
+
+
+class Appliance(models.Model):
+    name = models.CharField(max_length=100)
+    day_of_week = models.CharField(max_length=9)
+    total_consumption_wh = models.FloatField()
+
+    def __str__(self):
+        return f"{self.name} - {self.day_of_week}"
