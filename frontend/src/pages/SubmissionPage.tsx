@@ -3,8 +3,8 @@ import { IonBackButton, IonButton, IonButtons, IonCard, IonCardContent, IonConte
 import axios from 'axios';
 import isValid from "uk-postcode-validator";
 
-const apiURL = "https://api.finnhagan.co.uk/api";
-// const apiURL = "http://127.0.0.1:8000/api";
+// const apiURL = "https://api.finnhagan.co.uk/api";
+const apiURL = "http://127.0.0.1:8000/api";
 
 //Define the interfaces for the data being sent to API
 interface WeatherData {
@@ -23,13 +23,10 @@ interface SolarData {
     daily_solar_output: number | null;
     optimal_time: string | null;
     optimal_power: number | null;
-    optimal_usage: OptimalUsageData;
+    wm_optimal_usage?: string[]; // New field for washing machine
+    td_optimal_usage?: string[]; // New field for tumble dryer
 }
 
-interface OptimalUsageData {
-    washing_machine?: string[];
-    tumble_dryer?: string[];
-}
 
 interface SubmissionData extends WeatherData {
     temperature: number | null;
@@ -127,9 +124,11 @@ const SubmissionPage: React.FC = () => {
                     daily_solar_output: solarResponse.data.daily_solar_output,
                     optimal_time: solarResponse.data.optimal_time,
                     optimal_power: solarResponse.data.optimal_power,
-                    optimal_usage: solarResponse.data.optimal_usage,
+                    wm_optimal_usage: solarResponse.data.wm_optimal_usage,
+                    td_optimal_usage: solarResponse.data.td_optimal_usage,
                 },
             };
+            console.log(submissionData);
             await submitData(submissionData);
             setShowToast(true);
         } catch (error) {

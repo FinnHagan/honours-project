@@ -21,7 +21,8 @@ class Submission(models.Model):
     daily_solar_output = models.FloatField(max_length=50, null=True)
     optimal_time = models.DateTimeField(default=timezone.now, null=True)
     optimal_power = models.FloatField(max_length=50, null=True)
-    optimal_usage = models.JSONField(null=True, blank=True)
+    wm_optimal_usage = models.JSONField(null=True, blank=True)
+    td_optimal_usage = models.JSONField(null=True, blank=True)
 
 
 class Appliance(models.Model):
