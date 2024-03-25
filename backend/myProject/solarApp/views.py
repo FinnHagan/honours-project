@@ -171,7 +171,6 @@ class SolarDataView(APIView):
         }
 
         hours = preferred_hours.get(preferred_time, range(6, 24))
-        # Convert hours to list to ensure compatibility with .isin()
         hours_list = list(hours)
 
         # Convert ac_power to DataFrame for easier manipulation
