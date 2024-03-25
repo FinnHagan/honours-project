@@ -85,6 +85,8 @@ class SolarDataView(APIView):
         number_of_solar_panels = int(request.data.get('number_of_solar_panels'))
         washing_machine_selected = request.data.get('washing_machine_selected')
         tumble_dryer_selected = request.data.get('tumble_dryer_selected')
+        wm_optimal_usage = None # If WM not selected, needs to be done so post goes through
+        td_optimal_usage = None # If TD not selected, needs to be done so post goes through
 
         # Convert datetime string to actual datetime
         input_date = datetime.strptime(datetime_str, '%Y-%m-%dT%H:%M')
@@ -108,6 +110,7 @@ class SolarDataView(APIView):
 
         # Create a DataFrame for weather data
         weather = pd.DataFrame({'ghi': ghi, 'dni': dni, 'dhi': dhi}, index=times)
+        print("pd.DataFrame(weather): ", pd.DataFrame(weather))
 
         # Initialize PV system and ModelChain
         module_parameters = {'pdc0': 250, 'gamma_pdc': -0.004}
@@ -127,26 +130,17 @@ class SolarDataView(APIView):
         ac_power = mc.results.ac * number_of_solar_panels
 
         optimal_hour = ac_power.idxmax()
-        print("Optimal Hour", optimal_hour)
 
-        wm_optimal_usage = []
-        td_optimal_usage = []
+        wm_data = self.get_appliance_data('washing_machine') if washing_machine_selected else None
+        td_data = self.get_appliance_data('tumble_dryer') if tumble_dryer_selected else None
 
-        if washing_machine_selected:
-            wm_data = self.get_appliance_data('washing_machine', input_date)
-            if wm_data is not None:
-                optimal_periods = self.calculate_optimal_periods(ac_power, wm_data)
-                print("Washing Machine Optimal Periods", optimal_periods)
-                wm_optimal_usage = [time.strftime('%Y-%m-%d %H:%M') for time in optimal_periods]
-                print("Washing Machine Optimal Usage", wm_optimal_usage)
+        if washing_machine_selected and wm_data:
+            wm_preferred_time = 'morning' if washing_machine_selected and tumble_dryer_selected else 'anytime'
+            wm_optimal_usage = self.calculate_optimal_periods(ac_power, wm_data, wm_preferred_time)
 
-        if tumble_dryer_selected:
-            td_data = self.get_appliance_data('tumble_dryer', input_date)
-            if td_data is not None:
-                optimal_periods = self.calculate_optimal_periods(ac_power, td_data)
-                print("Tumble Dryer Optimal Periods", optimal_periods)
-                td_optimal_usage = [time.strftime('%Y-%m-%d %H:%M') for time in optimal_periods]
-                print("Tumble Dryer Optimal Usage", td_optimal_usage)
+        if tumble_dryer_selected and td_data:
+            td_preferred_time = 'afternoon' if washing_machine_selected and tumble_dryer_selected else 'anytime'
+            td_optimal_usage = self.calculate_optimal_periods(ac_power, td_data, td_preferred_time)
 
         return Response({
             "solar_altitude": solar_position['apparent_elevation'].iloc[0],
@@ -159,31 +153,42 @@ class SolarDataView(APIView):
         })
 
 
-    def get_appliance_data(self, appliance_name, date):
-        day_of_week = date.strftime('%A')  # Format to match database entries for day
-
-        try:
-            appliance_data = Appliance.objects.get(name=appliance_name, day_of_week=day_of_week)
-            print(f"Found consumption data for {appliance_name} on {day_of_week}: {appliance_data.total_consumption_wh} Wh.")
-            return appliance_data.total_consumption_wh
-        except Appliance.DoesNotExist:
-            print(f"No consumption data found for {appliance_name} on {day_of_week}.")
-            return None
+    def get_appliance_data(self, appliance_name):
+        # Predefined appliance consumption and preferred usage times (will need to change)
+        appliance_info = {
+            'washing_machine': {'consumption': 654.04, 'preferred_time': 'afternoon'},
+            'tumble_dryer': {'consumption': 917.29, 'preferred_time': 'morning'},
+        }
+        return appliance_info.get(appliance_name)
 
 
+    def calculate_optimal_periods(self, ac_power, appliance_data, preferred_time):
+        preferred_hours = {
+            'morning': range(6, 13),
+            'afternoon': range(13, 20),
+            'evening': range(20, 24),
+            'anytime': range(6, 24)  # Anytime during potential sunlight hours
+        }
 
-    def calculate_optimal_periods(self, ac_power, consumption):
-        power_df = ac_power.to_frame(name="production")
-        power_df['consumption'] = consumption
-        power_df['delta'] = power_df['production'] - power_df['consumption']
+        hours = preferred_hours.get(preferred_time, range(6, 24))
+        hours_list = list(hours)
 
-        # Prioritize times where production is closest to consumption, even if it's less
-        power_df['priority'] = power_df.apply(lambda row: -abs(row['delta']), axis=1)
+        # Convert ac_power to DataFrame for easier manipulation
+        ac_power_df = ac_power.to_frame(name='production')
+        ac_power_df['hour'] = ac_power_df.index.hour
 
-        # Filter for periods where production is positive or where the delta is smallest when negative
-        optimal_periods = power_df.sort_values(by='priority', ascending=False)
+        # Only consider times where there is solar production
+        solar_production_hours = ac_power_df[ac_power_df['production'] > 0]
 
-        return optimal_periods.index.tolist()
+        optimal_times_list = []
+        preferred_times_df = solar_production_hours[solar_production_hours['hour'].isin(hours_list)].copy()
+
+        preferred_times_df['net_production'] = preferred_times_df['production'] - appliance_data['consumption']
+        preferred_times_df = preferred_times_df.sort_values(by='net_production', ascending=False)
+        optimal_times_list.extend(preferred_times_df.index.strftime('%Y-%m-%d %H:%M').tolist())
+
+        return optimal_times_list if optimal_times_list else ["No optimal time found within solar production constraints."]
+
 
 
 class WashingMachineView(APIView):
