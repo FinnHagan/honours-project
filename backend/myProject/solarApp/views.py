@@ -148,7 +148,6 @@ class SolarDataView(APIView):
                 td_optimal_usage = [time.strftime('%Y-%m-%d %H:%M') for time in optimal_periods]
                 print("Tumble Dryer Optimal Usage", td_optimal_usage)
 
-        # Return response including the optimal periods for each selected appliance
         return Response({
             "solar_altitude": solar_position['apparent_elevation'].iloc[0],
             "solar_azimuth": solar_position['azimuth'].iloc[0],
@@ -161,21 +160,19 @@ class SolarDataView(APIView):
 
 
     def get_appliance_data(self, appliance_name, date):
-        day_of_week = date.strftime('%A')  # Format to match your database entries, e.g., "Monday"
+        day_of_week = date.strftime('%A')  # Format to match database entries for day
 
-        # Attempt to fetch the appliance's consumption data for the specified day
         try:
             appliance_data = Appliance.objects.get(name=appliance_name, day_of_week=day_of_week)
             print(f"Found consumption data for {appliance_name} on {day_of_week}: {appliance_data.total_consumption_wh} Wh.")
             return appliance_data.total_consumption_wh
         except Appliance.DoesNotExist:
             print(f"No consumption data found for {appliance_name} on {day_of_week}.")
-            return None  # or return 0 if you prefer to handle it as zero consumption
+            return None
 
 
 
     def calculate_optimal_periods(self, ac_power, consumption):
-        # Create a DataFrame from the ac_power Series to work with it more easily
         power_df = ac_power.to_frame(name="production")
         power_df['consumption'] = consumption
         power_df['delta'] = power_df['production'] - power_df['consumption']
@@ -186,7 +183,6 @@ class SolarDataView(APIView):
         # Filter for periods where production is positive or where the delta is smallest when negative
         optimal_periods = power_df.sort_values(by='priority', ascending=False)
 
-        # Considering all periods for now; you might want to filter this further
         return optimal_periods.index.tolist()
 
 
@@ -219,7 +215,6 @@ class SubmissionView(generics.CreateAPIView):
     serializer_class = SubmissionSerializer
 
     def perform_create(self, serializer):
-        print("Data PC", self.request.data)
         temperature = self.request.data.get('temperature')
         cloud_cover = self.request.data.get('cloud_cover')
         wind_speed = self.request.data.get('wind_speed')
@@ -240,9 +235,7 @@ class SubmissionView(generics.CreateAPIView):
         optimal_time = solar_data.get('optimal_time')
         optimal_power = solar_data.get('optimal_power')
         wm_optimal_usage = solar_data.get('wm_optimal_usage')
-        print("Washing Machine optimal usage PC", wm_optimal_usage)
         td_optimal_usage = solar_data.get('td_optimal_usage')
-        print("Tumble Dryer optimal usage PC", td_optimal_usage)
 
         serializer.save(
             temperature=temperature,
