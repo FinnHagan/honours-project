@@ -23,12 +23,14 @@ class Submission(models.Model):
     optimal_power = models.FloatField(max_length=50, null=True)
     wm_optimal_usage = models.JSONField(null=True, blank=True)
     td_optimal_usage = models.JSONField(null=True, blank=True)
+    hourly_solar_production = models.JSONField(null=True, blank=True)
+    appliance_consumption = models.JSONField(null=True, blank=True)
 
 
-class Appliance(models.Model):
-    name = models.CharField(max_length=100)
-    day_of_week = models.CharField(max_length=9)
-    total_consumption_wh = models.FloatField()
+# class Appliance(models.Model):
+#     name = models.CharField(max_length=100)
+#     day_of_week = models.CharField(max_length=9)
+#     total_consumption_wh = models.FloatField()
 
-    def __str__(self):
-        return f"{self.name} - {self.day_of_week}"
+#     def __str__(self):
+#         return f"{self.name} - {self.day_of_week}"
