@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { IonBackButton, IonButton, IonButtons, IonCard, IonCardContent, IonContent, IonHeader, IonInput, IonPage, IonTitle, IonToolbar, IonText, IonLoading, IonToast, IonCheckbox, IonList, IonItem, IonLabel, IonRow } from '@ionic/react';
+import { IonBackButton, IonButton, IonButtons, IonCard, IonCardContent, IonContent, IonHeader, IonInput, IonPage, IonTitle, IonToolbar, IonText, IonLoading, IonToast, IonCheckbox, IonList, IonItem, IonLabel, IonRow, useIonRouter } from '@ionic/react';
 import axios from 'axios';
 import isValid from "uk-postcode-validator";
 
@@ -25,6 +25,8 @@ interface SolarData {
     optimal_power: number | null;
     wm_optimal_usage?: string[]; // New field for washing machine
     td_optimal_usage?: string[]; // New field for tumble dryer
+    hourly_solar_production?: string[]; // New field for hourly solar production
+    appliance_consumption?: string[]; // New field for appliance consumption
 }
 
 
@@ -77,6 +79,8 @@ const SubmissionPage: React.FC = () => {
     const [isWashingMachineSelected, setIsWashingMachineSelected] = useState(false);
     const [isTumbleDryerSelected, setIsTumbleDryerSelected] = useState(false);
 
+    const router = useIonRouter();
+
 
     const handleSubmit = async (event: any) => {
         event.preventDefault();
@@ -126,10 +130,14 @@ const SubmissionPage: React.FC = () => {
                     optimal_power: solarResponse.data.optimal_power,
                     wm_optimal_usage: solarResponse.data.wm_optimal_usage,
                     td_optimal_usage: solarResponse.data.td_optimal_usage,
+                    hourly_solar_production: solarResponse.data.hourly_solar_production,
+                    appliance_consumption: solarResponse.data.appliance_consumption,
                 },
             };
-            console.log(submissionData);
-            await submitData(submissionData);
+            const response = await submitData(submissionData);
+            const submissionId = response.data.id;
+            setShowToast(true);
+            router.push(`/optimalUsagePage/${submissionId}/`);
             setShowToast(true);
         } catch (error) {
             console.error("Error fetching weather or submitting data:", error);

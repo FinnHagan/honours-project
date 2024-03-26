@@ -23,6 +23,7 @@ import '@ionic/react/css/display.css';
 import './theme/variables.css';
 import Register from './pages/Register';
 import SubmissionPage from './pages/SubmissionPage';
+import OptimalUsagePage from './pages/OptimalUsagePage';
 
 setupIonicReact();
 
@@ -35,6 +36,7 @@ const App: React.FC = () => (
         </Route>
         <Route component={Register} path="/register" exact />
         <Route component={SubmissionPage} path="/submissionPage" exact />
+        <Route component={OptimalUsagePage} path="/optimalUsagePage/:submissionId" exact />
       </IonRouterOutlet>
     </IonReactRouter>
   </IonApp>

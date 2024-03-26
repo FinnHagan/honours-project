@@ -1,4 +1,3 @@
-from audioop import avg
 from rest_framework import generics
 from .models import Submission
 from .serializers import SubmissionSerializer
@@ -15,9 +14,8 @@ import pvlib.irradiance
 import pandas as pd
 from datetime import datetime
 import pytz
-from .models import Appliance
 from datetime import timedelta
-
+from .serializers import ChartDataSerializer
 
 
 def get_lat_lon_from_post_code(post_code):
@@ -87,6 +85,8 @@ class SolarDataView(APIView):
         tumble_dryer_selected = request.data.get('tumble_dryer_selected')
         wm_optimal_usage = None # If WM not selected, needs to be done so post goes through
         td_optimal_usage = None # If TD not selected, needs to be done so post goes through
+        hourly_solar_production = None
+        appliance_consumption = None
 
         # Convert datetime string to actual datetime
         input_date = datetime.strptime(datetime_str, '%Y-%m-%dT%H:%M')
@@ -110,7 +110,6 @@ class SolarDataView(APIView):
 
         # Create a DataFrame for weather data
         weather = pd.DataFrame({'ghi': ghi, 'dni': dni, 'dhi': dhi}, index=times)
-        print("pd.DataFrame(weather): ", pd.DataFrame(weather))
 
         # Initialize PV system and ModelChain
         module_parameters = {'pdc0': 250, 'gamma_pdc': -0.004}
@@ -142,6 +141,17 @@ class SolarDataView(APIView):
             td_preferred_time = 'afternoon' if washing_machine_selected and tumble_dryer_selected else 'anytime'
             td_optimal_usage = self.calculate_optimal_periods(ac_power, td_data, td_preferred_time)
 
+        hourly_solar_production = [
+            {"hour": hour.strftime('%H:%M'), "production": production}
+            for hour, production in ac_power.items()
+        ]
+
+        # Get appliance data (assuming static consumption values)
+        appliance_consumption = {
+            "washing_machine": 654.04,  # Consumption in Wh
+            "tumble_dryer": 917.29  # Consumption in Wh
+        }
+
         return Response({
             "solar_altitude": solar_position['apparent_elevation'].iloc[0],
             "solar_azimuth": solar_position['azimuth'].iloc[0],
@@ -150,6 +160,8 @@ class SolarDataView(APIView):
             "optimal_power": ac_power.max(),
             "wm_optimal_usage": wm_optimal_usage,
             "td_optimal_usage": td_optimal_usage,
+            "hourly_solar_production": hourly_solar_production,
+            "appliance_consumption": appliance_consumption
         })
 
 
@@ -183,7 +195,7 @@ class SolarDataView(APIView):
         optimal_times_list = []
         preferred_times_df = solar_production_hours[solar_production_hours['hour'].isin(hours_list)].copy()
 
-        preferred_times_df['net_production'] = preferred_times_df['production'] - appliance_data['consumption']
+        preferred_times_df['net_production'] = (preferred_times_df['production']) - appliance_data['consumption']
         preferred_times_df = preferred_times_df.sort_values(by='net_production', ascending=False)
         optimal_times_list.extend(preferred_times_df.index.strftime('%Y-%m-%d %H:%M').tolist())
 
@@ -191,28 +203,28 @@ class SolarDataView(APIView):
 
 
 
-class WashingMachineView(APIView):
+# class WashingMachineView(APIView):
 
-    def get(self, request):
-        washing_machine_data = list(Appliance.objects.filter(name="washing_machine").values('day_of_week', 'total_consumption_wh'))
-        data = {
-            "wm_average_consumption_per_day": washing_machine_data,
-            "wm_highest_consumption_day": max(washing_machine_data, key=lambda x: x['total_consumption_wh']),
-            "wm_lowest_consumption_day": min(washing_machine_data, key=lambda x: x['total_consumption_wh'])
-        }
-        return Response(data)
+#     def get(self, request):
+#         washing_machine_data = list(Appliance.objects.filter(name="washing_machine").values('day_of_week', 'total_consumption_wh'))
+#         data = {
+#             "wm_average_consumption_per_day": washing_machine_data,
+#             "wm_highest_consumption_day": max(washing_machine_data, key=lambda x: x['total_consumption_wh']),
+#             "wm_lowest_consumption_day": min(washing_machine_data, key=lambda x: x['total_consumption_wh'])
+#         }
+#         return Response(data)
 
 
-class TumbleDryerView(APIView):
+# class TumbleDryerView(APIView):
 
-    def get(self, request):
-        tumble_dryer_data = list(Appliance.objects.filter(name="tumble_dryer").values('day_of_week', 'total_consumption_wh'))
-        data = {
-            "td_average_consumption_per_day": tumble_dryer_data,
-            "td_highest_consumption_day": max(tumble_dryer_data, key=lambda x: x['total_consumption_wh']),
-            "td_lowest_consumption_day": min(tumble_dryer_data, key=lambda x: x['total_consumption_wh'])
-        }
-        return Response(data)
+#     def get(self, request):
+#         tumble_dryer_data = list(Appliance.objects.filter(name="tumble_dryer").values('day_of_week', 'total_consumption_wh'))
+#         data = {
+#             "td_average_consumption_per_day": tumble_dryer_data,
+#             "td_highest_consumption_day": max(tumble_dryer_data, key=lambda x: x['total_consumption_wh']),
+#             "td_lowest_consumption_day": min(tumble_dryer_data, key=lambda x: x['total_consumption_wh'])
+#         }
+#         return Response(data)
 
 
 class SubmissionView(generics.CreateAPIView):
@@ -241,6 +253,8 @@ class SubmissionView(generics.CreateAPIView):
         optimal_power = solar_data.get('optimal_power')
         wm_optimal_usage = solar_data.get('wm_optimal_usage')
         td_optimal_usage = solar_data.get('td_optimal_usage')
+        hourly_solar_production = solar_data.get('hourly_solar_production')
+        appliance_consumption = solar_data.get('appliance_consumption')
 
         serializer.save(
             temperature=temperature,
@@ -255,5 +269,13 @@ class SubmissionView(generics.CreateAPIView):
             optimal_time=optimal_time,
             optimal_power=optimal_power,
             wm_optimal_usage=wm_optimal_usage,
-            td_optimal_usage=td_optimal_usage
+            td_optimal_usage=td_optimal_usage,
+            hourly_solar_production=hourly_solar_production,
+            appliance_consumption=appliance_consumption,
         )
+
+class SubmissionChartDataView(APIView):
+    def get(self, request, pk):
+        submission = Submission.objects.get(pk=pk)
+        serializer = ChartDataSerializer(submission)
+        return Response(serializer.data)
