@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
-import { IonBackButton, IonButton, IonButtons, IonCard, IonCardContent, IonContent, IonHeader, IonInput, IonPage, IonTitle, IonToolbar, IonText, IonLoading, IonToast, IonCheckbox, IonList, IonItem, IonLabel, IonRow, useIonRouter } from '@ionic/react';
+import { IonBackButton, IonButton, IonButtons, IonCard, IonCardContent, IonContent, IonHeader, IonInput, IonPage, IonTitle, IonToolbar, IonText, IonLoading, IonToast, IonCheckbox, IonList, IonItem, IonLabel, IonRow, useIonRouter, IonIcon } from '@ionic/react';
 import axios from 'axios';
 import isValid from "uk-postcode-validator";
+import { arrowBack } from 'ionicons/icons';
+import { useHistory } from 'react-router-dom';
 
 const apiURL = "https://api.finnhagan.co.uk/api";
 // const apiURL = "http://127.0.0.1:8000/api";
@@ -23,10 +25,10 @@ interface SolarData {
     daily_solar_output: number | null;
     optimal_time: string | null;
     optimal_power: number | null;
-    wm_optimal_usage?: string[]; // New field for washing machine
-    td_optimal_usage?: string[]; // New field for tumble dryer
-    hourly_solar_production?: string[]; // New field for hourly solar production
-    appliance_consumption?: string[]; // New field for appliance consumption
+    wm_optimal_usage?: string[];
+    td_optimal_usage?: string[];
+    hourly_solar_production?: string[];
+    appliance_consumption?: string[];
 }
 
 
@@ -60,6 +62,12 @@ const submitData = async (data: SubmissionData) => {
 };
 
 const SubmissionPage: React.FC = () => {
+    const history = useHistory();
+
+    const handleBack = () => {
+        window.location.href = '/';
+    };
+
     const [formData, setFormData] = useState({
         postCode: '',
         solarPanels: 1,
@@ -199,7 +207,10 @@ const SubmissionPage: React.FC = () => {
             <IonHeader>
                 <IonToolbar color="primary">
                     <IonButtons slot="start">
-                        <IonBackButton defaultHref="/" />
+                        <IonButton onClick={handleBack}>
+                            <IonIcon icon={arrowBack} />
+                            Back
+                        </IonButton>
                     </IonButtons>
                     <IonTitle>Should I Put My Washing On?</IonTitle>
                 </IonToolbar>
