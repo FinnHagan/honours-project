@@ -27,10 +27,10 @@ class Submission(models.Model):
     appliance_consumption = models.JSONField(null=True, blank=True)
 
 
-# class Appliance(models.Model):
-#     name = models.CharField(max_length=100)
-#     day_of_week = models.CharField(max_length=9)
-#     total_consumption_wh = models.FloatField()
+class ApplianceConsumption(models.Model):
+    appliance_name = models.CharField(max_length=100)
+    timestamp = models.TimeField()
+    consumption = models.FloatField()
 
-#     def __str__(self):
-#         return f"{self.name} - {self.day_of_week}"
+    def __str__(self):
+        return f"{self.appliance_name} consumption at {self.timestamp}"
