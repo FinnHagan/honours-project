@@ -37,6 +37,11 @@ class Command(BaseCommand):
 
         for record in predefined_data:
             record['timestamp'] = time.fromisoformat(record['timestamp'])
-            ApplianceConsumption.objects.create(**record)
+            obj, created = ApplianceConsumption.objects.get_or_create(**record)
+            if created:
+                self.stdout.write(self.style.SUCCESS(f'Added new record for {record["appliance_name"]} at {record["timestamp"]}'))
+            else:
+                self.stdout.write(self.style.WARNING(f'Record already exists for {record["appliance_name"]} at {record["timestamp"]}'))
 
-        self.stdout.write(self.style.SUCCESS('Successfully loaded appliance consumption data'))
+
+                self.stdout.write(self.style.SUCCESS('Successfully loaded appliance consumption data'))
