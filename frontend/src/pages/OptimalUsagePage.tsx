@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { useParams } from 'react-router';
-import { useHistory } from 'react-router-dom';
 import { IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonPage, IonTitle, IonToolbar } from '@ionic/react';
 import { arrowBack } from 'ionicons/icons';
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, Filler } from 'chart.js';
@@ -37,8 +36,6 @@ const apiURL = "https://api.finnhagan.co.uk/api";
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, Filler);
 
 const OptimalUsagePage: React.FC = () => {
-
-    const history = useHistory();
 
     const handleBack = () => {
         window.location.href = '/submissionPage';
@@ -80,7 +77,7 @@ const OptimalUsagePage: React.FC = () => {
                 ...wm_consumption_data.map((data: { x: any; }) => data.x),
                 ...td_consumption_data.map((data: { x: any; }) => data.x),
             ]);
-            const labels = Array.from(allTimestamps).sort((a, b) => (a > b ? 1 : -1));
+            const labels = Array.from(allTimestamps).sort((a, b) => (a > b ? 1 : -1)); //Ensures lines overlap, rather than go side by side
 
             setChartData({
                 labels,

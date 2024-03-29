@@ -28,9 +28,13 @@ class Submission(models.Model):
 
 
 class ApplianceConsumption(models.Model):
-    appliance_name = models.CharField(max_length=100)
+    appliance_name = models.CharField(max_length=255)
     timestamp = models.TimeField()
     consumption = models.FloatField()
+
+    class Meta:
+        unique_together = ('appliance_name', 'timestamp',)
+
 
     def __str__(self):
         return f"{self.appliance_name} consumption at {self.timestamp}"
