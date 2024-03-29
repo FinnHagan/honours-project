@@ -1,6 +1,6 @@
 {
-  "short_name": "Ionic App",
-  "name": "My Ionic App",
+  "short_name": "Solar App",
+  "name": "Should I Put My Washing On?",
   "icons": [
     {
       "src": "assets/icon/favicon.png",
@@ -8,8 +8,8 @@
       "type": "image/x-icon"
     },
     {
-      "src": "assets/icon/icon.png",
-      "type": "image/png",
+      "src": "src/assets/app-logo.jpg",
+      "type": "image/jpg",
       "sizes": "512x512",
       "purpose": "maskable"
     }
