@@ -3,10 +3,11 @@ import { IonBackButton, IonButton, IonButtons, IonCard, IonCardContent, IonConte
 import axios from 'axios';
 import isValid from "uk-postcode-validator";
 import { arrowBack } from 'ionicons/icons';
-import { useHistory } from 'react-router-dom';
 
 const apiURL = "https://api.finnhagan.co.uk/api";
 // const apiURL = "http://127.0.0.1:8000/api";
+const token = localStorage.getItem('token');
+
 
 //Define the interfaces for the data being sent to API
 interface WeatherData {
@@ -44,25 +45,37 @@ interface SubmissionData extends WeatherData {
 
 //Gets user input from form and sends it to the API
 const fetchWeatherData = async (data: WeatherData) => {
+    const token = localStorage.getItem('token');
     return axios.post(`${apiURL}/weatherdata/`, data, {
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Token ${token}`,
+        },
     });
 };
+
 const fetchSolarData = async (data: WeatherData) => {
+    const token = localStorage.getItem('token');
     return axios.post(`${apiURL}/solardata/`, data, {
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Token ${token}`,
+        },
     });
-}
+};
 
 //Submits the combined data to the API
 const submitData = async (data: SubmissionData) => {
+    const token = localStorage.getItem('token');
     return axios.post(`${apiURL}/submission/`, data, {
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Token ${token}`,
+        },
     });
 };
 
 const SubmissionPage: React.FC = () => {
-    const history = useHistory();
 
     const handleBack = () => {
         window.location.href = '/';

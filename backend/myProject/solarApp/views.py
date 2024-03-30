@@ -15,6 +15,9 @@ import pandas as pd
 from datetime import datetime
 import pytz
 from django.db.models import Sum
+from rest_framework import status
+from .serializers import UserSerializer
+from rest_framework.permissions import AllowAny
 
 
 def get_lat_lon_from_post_code(post_code):
@@ -256,3 +259,14 @@ class SubmissionChartDataView(APIView):
         submission = Submission.objects.get(pk=pk)
         serializer = ChartDataSerializer(submission)
         return Response(serializer.data)
+
+
+class CreateUserView(APIView):
+    permission_classes = [AllowAny]
+    def post(self, request, format='json'):
+        serializer = UserSerializer(data=request.data)
+        if serializer.is_valid():
+            user = serializer.save()
+            if user:
+                return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

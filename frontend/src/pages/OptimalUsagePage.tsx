@@ -8,6 +8,7 @@ import { Line } from 'react-chartjs-2';
 import { ChartOptions } from 'chart.js';
 import { format, parseISO } from 'date-fns';
 
+const token = localStorage.getItem('token');
 
 
 interface RouteParams {
@@ -59,54 +60,65 @@ const OptimalUsagePage: React.FC = () => {
             });
     };
     useEffect(() => {
-        axios.get(`${apiURL}/submission_chart_data/${submissionId}/`).then(response => {
-            const { hourly_solar_production, appliance_consumption } = response.data;
+        const token = localStorage.getItem('token');
+        if (token) {
+            axios.get(`${apiURL}/submission_chart_data/${submissionId}/`, {
+                headers: {
+                    'Authorization': `Token ${token}` // Include the token in the request headers
+                },
+            }).then((response) => {
+                const { hourly_solar_production, appliance_consumption } = response.data;
 
-            // Prepare the data for the solar production and appliances
-            const solar_production_data = hourly_solar_production.map((item: { hour: any; production: any; }) => ({
-                x: format(parseISO(`${new Date().toISOString().split('T')[0]}T${item.hour}:00`), 'HH:mm'),
-                y: item.production,
-            }));
+                // Prepare the data for the solar production and appliances
+                const solar_production_data = hourly_solar_production.map((item: { hour: any; production: any; }) => ({
+                    x: format(parseISO(`${new Date().toISOString().split('T')[0]}T${item.hour}:00`), 'HH:mm'),
+                    y: item.production,
+                }));
 
-            const wm_consumption_data = processApplianceConsumptionData('washing_machine', appliance_consumption);
-            const td_consumption_data = processApplianceConsumptionData('tumble_dryer', appliance_consumption);
+                const wm_consumption_data = processApplianceConsumptionData('washing_machine', appliance_consumption);
+                const td_consumption_data = processApplianceConsumptionData('tumble_dryer', appliance_consumption);
 
-            // Combine all timestamps into a unified set of labels
-            const allTimestamps = new Set([
-                ...solar_production_data.map((data: { x: any; }) => data.x),
-                ...wm_consumption_data.map((data: { x: any; }) => data.x),
-                ...td_consumption_data.map((data: { x: any; }) => data.x),
-            ]);
-            const labels = Array.from(allTimestamps).sort((a, b) => (a > b ? 1 : -1)); //Ensures lines overlap, rather than go side by side
+                // Combine all timestamps into a unified set of labels
+                const allTimestamps = new Set([
+                    ...solar_production_data.map((data: { x: any; }) => data.x),
+                    ...wm_consumption_data.map((data: { x: any; }) => data.x),
+                    ...td_consumption_data.map((data: { x: any; }) => data.x),
+                ]);
+                const labels = Array.from(allTimestamps).sort((a, b) => (a > b ? 1 : -1)); //Ensures lines overlap, rather than go side by side
 
-            setChartData({
-                labels,
-                datasets: [
-                    {
-                        label: 'Solar Production (Wh)',
-                        data: solar_production_data,
-                        borderColor: 'rgb(255, 205, 86)',
-                        backgroundColor: 'rgba(255, 205, 86, 0.5)',
-                        type: 'line',
-                        fill: true,
-                    },
-                    {
-                        label: 'Washing Machine Consumption (Wh)',
-                        data: wm_consumption_data,
-                        borderColor: 'rgb(54, 162, 235)',
-                        type: 'line',
-                        fill: false,
-                    },
-                    {
-                        label: 'Tumble Dryer Consumption (Wh)',
-                        data: td_consumption_data,
-                        borderColor: 'rgb(255, 99, 132)',
-                        type: 'line',
-                        fill: false,
-                    },
-                ],
+                setChartData({
+                    labels,
+                    datasets: [
+                        {
+                            label: 'Solar Production (Wh)',
+                            data: solar_production_data,
+                            borderColor: 'rgb(255, 205, 86)',
+                            backgroundColor: 'rgba(255, 205, 86, 0.5)',
+                            type: 'line',
+                            fill: true,
+                        },
+                        {
+                            label: 'Washing Machine Consumption (Wh)',
+                            data: wm_consumption_data,
+                            borderColor: 'rgb(54, 162, 235)',
+                            type: 'line',
+                            fill: false,
+                        },
+                        {
+                            label: 'Tumble Dryer Consumption (Wh)',
+                            data: td_consumption_data,
+                            borderColor: 'rgb(255, 99, 132)',
+                            type: 'line',
+                            fill: false,
+                        },
+                    ],
+                });
+            }).catch((error) => {
+                console.error('Error fetching submission data:', error.response.data);
             });
-        });
+        } else {
+            console.error('No token found');
+        }
     }, [submissionId]);
 
 
