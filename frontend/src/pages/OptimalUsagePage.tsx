@@ -8,8 +8,9 @@ import { Line } from 'react-chartjs-2';
 import { ChartOptions } from 'chart.js';
 import { format, parseISO } from 'date-fns';
 
+// const apiURL = "http://127.0.0.1:8000/api";
+const apiURL = "https://api.finnhagan.co.uk/api";
 const token = localStorage.getItem('token');
-
 
 interface RouteParams {
     submissionId: string;
@@ -29,9 +30,6 @@ interface MyChartData {
     labels: string[];
     datasets: ChartDataset[];
 }
-
-// const apiURL = "http://127.0.0.1:8000/api";
-const apiURL = "https://api.finnhagan.co.uk/api";
 
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, Filler);
