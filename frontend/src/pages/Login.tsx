@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { IonButton, IonCard, IonCardContent, IonContent, IonFooter, IonHeader, IonIcon, IonInput, IonItem, IonLabel, IonPage, IonTitle, IonToolbar, useIonRouter } from '@ionic/react';
-import { arrowForwardCircleOutline, personCircleOutline, reloadSharp } from 'ionicons/icons';
+import { arrowForwardCircleOutline, personCircleOutline, reloadSharp, eye, eyeOff } from 'ionicons/icons';
 import loginImage from '../assets/Login-screen-image.jpg';
 import Introduction from '../components/Introduction';
 import { Preferences } from '@capacitor/preferences';
@@ -13,6 +13,7 @@ const apiURL = "https://api.finnhagan.co.uk/api";
 const Login: React.FC = () => {
     const router = useIonRouter();
     const [introViewed, setIntroViewed] = useState(true);
+    const [showPassword, setShowPassword] = useState(false);
 
     useEffect(() => {
         const checkStorage = async () => {
@@ -36,9 +37,7 @@ const Login: React.FC = () => {
                     'Content-Type': 'application/json',
                 },
             });
-            console.log('Login successful:', response.data);
-            // Store the token and redirect
-            localStorage.setItem('token', response.data.key); // Adjust depending on token response
+            localStorage.setItem('token', response.data.key);
             router.push('/submissionPage');
         } catch (error: any) {
             console.error('Error logging in:', error.response.data);
@@ -77,7 +76,8 @@ const Login: React.FC = () => {
                                 </div>
                                 <form onSubmit={handleLogin}>
                                     <IonInput fill="outline" labelPlacement="floating" label="Username" type="text" placeholder="Username" name='username' required></IonInput>
-                                    <IonInput className="ion-margin-top" fill="outline" labelPlacement="floating" label="Password" type="password" name='password' required></IonInput>
+                                    <IonInput className="ion-margin-top" fill="outline" labelPlacement="floating" label="Password" type={showPassword ? "text" : "password"} name='password' required></IonInput>
+                                    <IonIcon slot="end" icon={showPassword ? eyeOff : eye} onClick={() => setShowPassword(!showPassword)} />
                                     <IonButton className="ion-margin-top font-bold" expand="block" type="submit" shape="round">
                                         Login
                                         <IonIcon slot="end" icon={arrowForwardCircleOutline} />
