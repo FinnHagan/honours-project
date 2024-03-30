@@ -4,8 +4,11 @@ import { arrowForwardCircleOutline, personCircleOutline, reloadSharp } from 'ion
 import loginImage from '../assets/Login-screen-image.jpg';
 import Introduction from '../components/Introduction';
 import { Preferences } from '@capacitor/preferences';
+import axios from 'axios';
 
 const INTRO_VIEWED = 'intro-viewed';
+const apiURL = "https://api.finnhagan.co.uk/api";
+// const apiURL = "http://127.0.0.1:8000/api";
 
 const Login: React.FC = () => {
     const router = useIonRouter();
@@ -19,10 +22,29 @@ const Login: React.FC = () => {
         checkStorage();
     }, []);
 
-    const handleLogin = (event: any) => {
+    const handleLogin = async (event: any) => {
         event.preventDefault();
-        router.push('/submissionPage', 'root');
+        const formData = new FormData(event.target);
+        const loginData = {
+            username: formData.get('username'),
+            password: formData.get('password'),
+        };
+
+        try {
+            const response = await axios.post(`${apiURL}/login/`, JSON.stringify(loginData), {
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            });
+            console.log('Login successful:', response.data);
+            // Store the token and redirect
+            localStorage.setItem('token', response.data.key); // Adjust depending on token response
+            router.push('/submissionPage');
+        } catch (error: any) {
+            console.error('Error logging in:', error.response.data);
+        }
     };
+
 
     const introDone = () => {
         console.log('Intro viewed');
@@ -54,8 +76,8 @@ const Login: React.FC = () => {
                                     <img src={loginImage} alt="Login Page"></img>
                                 </div>
                                 <form onSubmit={handleLogin}>
-                                    <IonInput fill="outline" labelPlacement="floating" label="Email" type="email" placeholder="uod@dundee.ac.uk" required></IonInput>
-                                    <IonInput className="ion-margin-top" fill="outline" labelPlacement="floating" label="Password" type="password" required></IonInput>
+                                    <IonInput fill="outline" labelPlacement="floating" label="Username" type="text" placeholder="Username" name='username' required></IonInput>
+                                    <IonInput className="ion-margin-top" fill="outline" labelPlacement="floating" label="Password" type="password" name='password' required></IonInput>
                                     <IonButton className="ion-margin-top font-bold" expand="block" type="submit" shape="round">
                                         Login
                                         <IonIcon slot="end" icon={arrowForwardCircleOutline} />
