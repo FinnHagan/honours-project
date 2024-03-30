@@ -3,8 +3,8 @@ import { IonBackButton, IonButton, IonButtons, IonCard, IonCardContent, IonConte
 import { arrowForwardCircleOutline, eyeOff, eye } from 'ionicons/icons';
 import axios from 'axios';
 
-// const apiURL = "https://api.finnhagan.co.uk/api";
-const apiURL = "http://127.0.0.1:8000/api";
+const apiURL = "https://api.finnhagan.co.uk/api";
+// const apiURL = "http://127.0.0.1:8000/api";
 
 const Register: React.FC = () => {
     const router = useIonRouter();
