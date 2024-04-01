@@ -1,13 +1,17 @@
 import React, { useState } from 'react';
-import { IonBackButton, IonButton, IonButtons, IonCard, IonCardContent, IonContent, IonHeader, IonIcon, IonInput, IonPage, IonText, IonTitle, IonToolbar, useIonAlert, useIonRouter } from '@ionic/react';
-import { arrowForwardCircleOutline, eyeOff, eye } from 'ionicons/icons';
+import { IonButton, IonButtons, IonCard, IonCardContent, IonContent, IonHeader, IonIcon, IonInput, IonPage, IonText, IonTitle, IonToolbar, useIonAlert, useIonRouter } from '@ionic/react';
+import { arrowForwardCircleOutline, eyeOff, eye, arrowBack } from 'ionicons/icons';
 import axios from 'axios';
-import { set } from 'date-fns';
 
 const apiURL = "https://api.finnhagan.co.uk/api";
 // const apiURL = "http://127.0.0.1:8000/api";
 
 const Register: React.FC = () => {
+
+    const handleBack = () => {
+        window.location.href = '/';
+    };
+
     const router = useIonRouter();
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -18,7 +22,7 @@ const Register: React.FC = () => {
         password: '',
         confirm_password: '',
     });
-    const [formKey, setFormKey] = useState(Date.now());
+    const [formKey, setFormKey] = useState(Date.now()); //Ensure form is reset after submission
 
     const handleRegister = async (event: any) => {
         event.preventDefault();
@@ -74,7 +78,10 @@ const Register: React.FC = () => {
             <IonHeader>
                 <IonToolbar color="primary">
                     <IonButtons slot="start">
-                        <IonBackButton defaultHref="/" />
+                        <IonButton onClick={handleBack}>
+                            <IonIcon icon={arrowBack} />
+                            Back
+                        </IonButton>
                     </IonButtons>
                     <IonTitle>Register</IonTitle>
                 </IonToolbar>
