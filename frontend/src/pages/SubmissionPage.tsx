@@ -6,8 +6,6 @@ import { arrowBack } from 'ionicons/icons';
 
 const apiURL = "https://api.finnhagan.co.uk/api";
 // const apiURL = "http://127.0.0.1:8000/api";
-const token = localStorage.getItem('token');
-
 
 //Define the interfaces for the data being sent to API
 interface WeatherData {
@@ -83,9 +81,9 @@ const SubmissionPage: React.FC = () => {
 
     const [formData, setFormData] = useState({
         postCode: '',
-        solarPanels: 1,
-        panelOrientation: 0,
-        panelTilt: 0,
+        solarPanels: '',
+        panelOrientation: '',
+        panelTilt: '',
         date: '',
         isValid: true,
         postCodeError: '',
@@ -110,12 +108,17 @@ const SubmissionPage: React.FC = () => {
             return;
         }
 
+        // Convert string values to numbers, with a fallback for non-numeric inputs
+        const number_of_solar_panels = parseInt(formData.solarPanels, 10) || 0;
+        const panel_orientation = parseFloat(formData.panelOrientation) || 0;
+        const panel_tilt = parseFloat(formData.panelTilt) || 0;
+
         const data = {
             post_code: `${formData.postCode.substring(0, 3)},GB`, // Format the postcode to match the API call format
-            number_of_solar_panels: formData.solarPanels,
+            number_of_solar_panels,
             date: formData.date,
-            panel_orientation: formData.panelOrientation,
-            panel_tilt: formData.panelTilt,
+            panel_orientation,
+            panel_tilt,
             washing_machine_selected: isWashingMachineSelected,
             tumble_dryer_selected: isTumbleDryerSelected,
 
@@ -128,10 +131,10 @@ const SubmissionPage: React.FC = () => {
             const solarResponse = await fetchSolarData(data);
             const submissionData = {
                 post_code: formData.postCode,
-                number_of_solar_panels: formData.solarPanels,
+                number_of_solar_panels,
                 date: formData.date,
-                panel_orientation: formData.panelOrientation,
-                panel_tilt: formData.panelTilt,
+                panel_orientation,
+                panel_tilt,
                 washing_machine_selected: data.washing_machine_selected,
                 tumble_dryer_selected: data.tumble_dryer_selected,
 
@@ -177,31 +180,25 @@ const SubmissionPage: React.FC = () => {
                 isValid: isValidPostcode, //Use isValid from Uk postcode validator to check if the postcode is valid
                 postCodeError: isValidPostcode ? '' : 'Invalid UK Postcode. Please try again.',
             });
-        } else if (name === 'solarPanels') {
-            const valid = !isNaN(value) && value > 0;
-            setFormData({
-                ...formData,
-                [name]: value,
-                solarPanelError: valid ? '' : "Please enter a valid number of panels (greater than 0).",
-            });
-
         } else if (name === 'panelOrientation') {
             const parsedValue = parseFloat(value);
-            const valid = !isNaN(parsedValue) && parsedValue >= 0 && parsedValue <= 360;
+            const valid = value === '' || (!isNaN(parsedValue) && parsedValue >= 0 && parsedValue <= 360);
             setFormData({
                 ...formData,
-                [name]: parsedValue,
+                panelOrientation: valid ? value : formData.panelOrientation,
                 panelOrientationError: valid ? '' : "Please enter a valid orientation (0-360 degrees).",
             });
+
         } else if (name === 'panelTilt') {
             const parsedValue = parseFloat(value);
-            const valid = !isNaN(parsedValue) && parsedValue >= 0 && parsedValue <= 90;
+            const valid = value === '' || (!isNaN(parsedValue) && parsedValue >= 0 && parsedValue <= 90);
             setFormData({
                 ...formData,
-                [name]: parsedValue,
+                panelTilt: valid ? value : formData.panelTilt,
                 panelTiltError: valid ? '' : "Please enter a valid tilt angle (0-90 degrees).",
             });
         }
+
         else {
             setFormData({ ...formData, [name]: value });
         }
@@ -235,15 +232,15 @@ const SubmissionPage: React.FC = () => {
                         <IonLoading isOpen={isLoading} message="Submission in progress... calculating optimal time " />
                         <IonToast isOpen={showToast} onDidDismiss={() => setShowToast(false)} message="Submission successful!" color="success" duration={3000} />
                         <form onSubmit={handleSubmit}>
-                            <IonInput fill="outline" label="Number of Solar Panels" required labelPlacement="floating" type="number" placeholder="Enter the number of solar panels installed" value={formData.solarPanels.toString()} onIonChange={(e) => handleInputChange('solarPanels', parseInt(e.detail.value ?? '0', 10))} min="1" />
+                            <IonInput label="Number of Solar Panels" required labelPlacement="floating" type="number" placeholder="Enter the number of solar panels installed" value={formData.solarPanels.toString()} onIonChange={(e) => handleInputChange('solarPanels', e.detail.value ?? '')} min="1" max="100" />
                             {formData.solarPanelError && <IonText className='ion-margin-top' color="danger"><sub>{formData.solarPanelError}</sub></IonText>}
-                            <IonInput className="ion-margin-top" fill="outline" label="Panel Orientation" labelPlacement="floating" required type="number" placeholder="Degrees from North (e.g., 180)" value={formData.panelOrientation ?? ''} onIonChange={(e) => handleInputChange('panelOrientation', e.detail.value ? parseFloat(e.detail.value) : null)} min="0" max="360" />
+                            <IonInput className="ion-margin-top" label="Panel Orientation" labelPlacement="floating" required type="number" placeholder="Degrees from North (e.g., 180)" value={formData.panelOrientation ?? ''} onIonChange={(e) => handleInputChange('panelOrientation', e.detail.value ?? '')} min="0" max="360" />
                             {formData.panelOrientationError && <IonText className='ion-margin-top' color="danger"><sub>{formData.panelOrientationError}</sub></IonText>}
-                            <IonInput className="ion-margin-top" fill="outline" label="Panel Tilt Angle" labelPlacement="floating" required type="number" placeholder="Angle in degrees (e.g., 30)" value={formData.panelTilt ?? ''} onIonChange={(e) => handleInputChange('panelTilt', e.detail.value ? parseFloat(e.detail.value) : null)} min="0" max="90" />
+                            <IonInput className="ion-margin-top" label="Panel Tilt Angle" labelPlacement="floating" required type="number" placeholder="Angle in degrees (e.g., 30)" value={formData.panelTilt ?? ''} onIonChange={(e) => handleInputChange('panelTilt', e.detail.value ?? '')} min="0" max="90" />
                             {formData.panelTiltError && <IonText className='ion-margin-top' color="danger"><sub>{formData.panelTiltError}</sub></IonText>}
-                            <IonInput className="ion-margin-top" fill="outline" label="Post Code" labelPlacement="floating" required value={formData.postCode} placeholder='Enter a UK post code' onIonChange={(e) => handleInputChange('postCode', e.detail.value)} />
+                            <IonInput className="ion-margin-top" label="Post Code" labelPlacement="floating" required value={formData.postCode} placeholder='Enter a UK post code' onIonChange={(e) => handleInputChange('postCode', e.detail.value)} />
                             {!formData.isValid && <IonText className='ion-margin-top' color="danger"><sub>{formData.postCodeError}</sub></IonText>}
-                            <IonInput className="ion-margin-top" fill="outline" label="Date" labelPlacement="floating" required type="datetime-local" placeholder="Date" value={formData.date} onIonChange={(e) => handleInputChange('date', e.detail.value)}></IonInput>
+                            <IonInput className="ion-margin-top" label="Date" labelPlacement="floating" required type="datetime-local" placeholder="Date" value={formData.date} onIonChange={(e) => handleInputChange('date', e.detail.value)}></IonInput>
                             <IonCheckbox className='ion-margin-top' checked={isWashingMachineSelected} onIonChange={(e) => handleCheckboxChange('washing_machine_selected', e.detail.checked)}>Washing Machine</IonCheckbox>
                             <IonRow className='ion-justify-content-between ion-align-items-center ion-margin-top'></IonRow>
                             <IonCheckbox className='ion-margin-top' checked={isTumbleDryerSelected} onIonChange={e => handleCheckboxChange('tumble_dryer_selected', e.detail.checked)}>Tumble Dryer</IonCheckbox>

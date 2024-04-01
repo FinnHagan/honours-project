@@ -10,7 +10,6 @@ import { format, parseISO } from 'date-fns';
 
 // const apiURL = "http://127.0.0.1:8000/api";
 const apiURL = "https://api.finnhagan.co.uk/api";
-const token = localStorage.getItem('token');
 
 interface RouteParams {
     submissionId: string;
