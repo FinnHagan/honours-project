@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { IonButton, IonCard, IonCardContent, IonContent, IonFooter, IonHeader, IonIcon, IonInput, IonItem, IonLabel, IonPage, IonText, IonTitle, IonToolbar, useIonRouter } from '@ionic/react';
+import { IonButton, IonCard, IonCardContent, IonContent, IonHeader, IonIcon, IonInput, IonPage, IonText, IonTitle, IonToolbar, useIonRouter } from '@ionic/react';
 import { arrowForwardCircleOutline, personCircleOutline, reloadSharp, eye, eyeOff } from 'ionicons/icons';
 import loginImage from '../assets/Login-screen-image.jpg';
 import Introduction from '../components/Introduction';
@@ -18,6 +18,7 @@ const Login: React.FC = () => {
         username: '',
         password: '',
     });
+    const [formKey, setFormKey] = useState(Date.now()); //Ensure form is reset after submission
 
     useEffect(() => {
         const checkStorage = async () => {
@@ -42,6 +43,7 @@ const Login: React.FC = () => {
                 headers: { 'Content-Type': 'application/json' },
             });
             localStorage.setItem('token', response.data.key);
+            setFormKey(Date.now());
             router.push('/submissionPage');
         } catch (error: any) {
             let errorMessage = "Login failed. Please check your credentials.";
@@ -89,7 +91,7 @@ const Login: React.FC = () => {
                                 <div>
                                     <img src={loginImage} alt="Login Page"></img>
                                 </div>
-                                <form onSubmit={handleLogin}>
+                                <form onSubmit={handleLogin} key={formKey}>
                                     <IonInput labelPlacement="floating" label="Username" type="text" placeholder="Username" name='username' required></IonInput>
                                     {errorMessages.username && <IonText color="danger"><sub>{errorMessages.username}</sub></IonText>}
                                     <IonInput className="ion-margin-top" labelPlacement="floating" label="Password" type={showPassword ? "text" : "password"} name='password' required></IonInput>

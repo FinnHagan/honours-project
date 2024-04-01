@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { IonBackButton, IonButton, IonButtons, IonCard, IonCardContent, IonContent, IonHeader, IonInput, IonPage, IonTitle, IonToolbar, IonText, IonLoading, IonToast, IonCheckbox, IonList, IonItem, IonLabel, IonRow, useIonRouter, IonIcon } from '@ionic/react';
+import { IonButton, IonButtons, IonCard, IonCardContent, IonContent, IonHeader, IonInput, IonPage, IonTitle, IonToolbar, IonText, IonLoading, IonToast, IonCheckbox, IonRow, useIonRouter, IonIcon } from '@ionic/react';
 import axios from 'axios';
 import isValid from "uk-postcode-validator";
 import { arrowBack } from 'ionicons/icons';
@@ -100,6 +100,8 @@ const SubmissionPage: React.FC = () => {
 
     const router = useIonRouter();
 
+    const [formKey, setFormKey] = useState(Date.now()); //Ensure form is reset after submission
+
 
     const handleSubmit = async (event: any) => {
         event.preventDefault();
@@ -161,6 +163,7 @@ const SubmissionPage: React.FC = () => {
             const response = await submitData(submissionData);
             const submissionId = response.data.id;
             setShowToast(true);
+            setFormKey(Date.now());
             router.push(`/optimalUsagePage/${submissionId}/`);
             setShowToast(true);
         } catch (error) {
@@ -231,7 +234,7 @@ const SubmissionPage: React.FC = () => {
                     <IonCardContent>
                         <IonLoading isOpen={isLoading} message="Submission in progress... calculating optimal time " />
                         <IonToast isOpen={showToast} onDidDismiss={() => setShowToast(false)} message="Submission successful!" color="success" duration={3000} />
-                        <form onSubmit={handleSubmit}>
+                        <form onSubmit={handleSubmit} key={formKey}>
                             <IonInput label="Number of Solar Panels" required labelPlacement="floating" type="number" placeholder="Enter the number of solar panels installed" value={formData.solarPanels.toString()} onIonChange={(e) => handleInputChange('solarPanels', e.detail.value ?? '')} min="1" max="100" />
                             {formData.solarPanelError && <IonText className='ion-margin-top' color="danger"><sub>{formData.solarPanelError}</sub></IonText>}
                             <IonInput className="ion-margin-top" label="Panel Orientation" labelPlacement="floating" required type="number" placeholder="Degrees from North (e.g., 180)" value={formData.panelOrientation ?? ''} onIonChange={(e) => handleInputChange('panelOrientation', e.detail.value ?? '')} min="0" max="360" />
