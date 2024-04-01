@@ -53,6 +53,12 @@ class UserSerializer(serializers.ModelSerializer):
         if attrs['password'] != attrs.pop('confirm_password'):
             raise serializers.ValidationError({"password": "Password fields didn't match."})
         return attrs
+    
+    def validate_email(self, value):
+        value = User.objects.normalize_email(value)        
+        if User.objects.filter(email=value).exists():
+            raise serializers.ValidationError("A user with that email already exists.")
+        return value
 
     def create(self, validated_data):
         user = User.objects.create_user(

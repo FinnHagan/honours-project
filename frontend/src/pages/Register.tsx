@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { IonBackButton, IonButton, IonButtons, IonCard, IonCardContent, IonContent, IonHeader, IonIcon, IonInput, IonPage, IonTitle, IonToolbar, useIonAlert, useIonRouter } from '@ionic/react';
+import { IonBackButton, IonButton, IonButtons, IonCard, IonCardContent, IonContent, IonHeader, IonIcon, IonInput, IonPage, IonText, IonTitle, IonToolbar, useIonAlert, useIonRouter } from '@ionic/react';
 import { arrowForwardCircleOutline, eyeOff, eye } from 'ionicons/icons';
 import axios from 'axios';
+import { set } from 'date-fns';
 
 const apiURL = "https://api.finnhagan.co.uk/api";
 // const apiURL = "http://127.0.0.1:8000/api";
@@ -11,6 +12,13 @@ const Register: React.FC = () => {
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const [presentAlert] = useIonAlert();
+    const [errorMessages, setErrorMessages] = useState({
+        username: '',
+        email: '',
+        password: '',
+        confirm_password: '',
+    });
+    const [formKey, setFormKey] = useState(Date.now());
 
     const handleRegister = async (event: any) => {
         event.preventDefault();
@@ -20,12 +28,10 @@ const Register: React.FC = () => {
         const password = formData.get('password');
         const confirm_password = formData.get('confirm_password');
 
+        setErrorMessages({ username: '', email: '', password: '', confirm_password: '' });
+
         if (password !== confirm_password) {
-            presentAlert({
-                header: 'Password Mismatch',
-                message: 'Passwords do not match. Please try again.',
-                buttons: ['OK']
-            });
+            setErrorMessages(errors => ({ ...errors, confirm_password: 'Passwords do not match. Please try again.' }));
             return;
         }
 
@@ -37,19 +43,31 @@ const Register: React.FC = () => {
         };
 
         try {
-            const response = await axios.post(`${apiURL}/register/`, JSON.stringify(userData), {
+            await axios.post(`${apiURL}/register/`, userData, {
                 headers: { 'Content-Type': 'application/json' },
             });
-            router.push('/');
-        } catch (error: any) {
-            console.error('Error registering user:', error.response?.data || error.message);
+            // Redirect or show a success message
             presentAlert({
-                header: 'Registration Failed',
-                message: 'Failed to register user. Please try again.',
-                buttons: ['OK']
+                header: 'Registration Successful',
+                message: 'You have successfully registered. You can now log in.',
+                buttons: [{
+                    text: 'OK',
+                    handler: () => {
+                        setFormKey(Date.now());
+                        router.push('/');
+                    }
+                }]
             });
+        } catch (error: any) {
+            if (error.response && error.response.data) {
+                const errors = error.response.data;
+                Object.keys(errors).forEach(key => {
+                    setErrorMessages(prevErrors => ({ ...prevErrors, [key]: errors[key].join(' ') }));
+                });
+            }
         }
     };
+
 
     return (
         <IonPage>
@@ -65,13 +83,17 @@ const Register: React.FC = () => {
             <IonContent>
                 <IonCard>
                     <IonCardContent>
-                        <form onSubmit={handleRegister}>
-                            <IonInput fill="outline" labelPlacement="floating" label="Username" type="text" placeholder="Username" name='username' required></IonInput>
-                            <IonInput className='ion-margin-top' fill="outline" labelPlacement="floating" label="Email" type="email" name='email' placeholder="uod@dundee.ac.uk" required></IonInput>
-                            <IonInput className="ion-margin-top" fill="outline" labelPlacement="floating" label="Password" type={showPassword ? "text" : "password"} name='password' required></IonInput>
+                        <form onSubmit={handleRegister} key={formKey}>
+                            <IonInput labelPlacement="floating" label="Username" type="text" placeholder="Username" name='username' required></IonInput>
+                            {errorMessages.username && <IonText color="danger"><sub>{errorMessages.username}</sub></IonText>}
+                            <IonInput className='ion-margin-top' labelPlacement="floating" label="Email" type="email" name='email' placeholder="uod@dundee.ac.uk" required></IonInput>
+                            {errorMessages.email && <IonText color="danger"><sub>{errorMessages.email}</sub></IonText>}
+                            <IonInput className="ion-margin-top" labelPlacement="floating" label="Password" type={showPassword ? "text" : "password"} name='password' required></IonInput>
                             <IonIcon icon={showPassword ? eyeOff : eye} onClick={() => setShowPassword(!showPassword)} />
-                            <IonInput className="ion-margin-top" fill="outline" labelPlacement="floating" label="Confirm Password" type={showConfirmPassword ? "text" : "password"} name='confirm_password' required ></IonInput>
+                            {errorMessages.password && <IonText color="danger"><sub>{errorMessages.password}</sub></IonText>}
+                            <IonInput className="ion-margin-top" labelPlacement="floating" label="Confirm Password" type={showConfirmPassword ? "text" : "password"} name='confirm_password' required ></IonInput>
                             <IonIcon icon={showConfirmPassword ? eyeOff : eye} onClick={() => setShowConfirmPassword(!showConfirmPassword)} />
+                            {errorMessages.confirm_password && <IonText color="danger"><sub>{errorMessages.confirm_password}</sub></IonText>}
                             <IonButton className="ion-margin-top font-bold" expand="block" type="submit" shape="round" color="success">
                                 Create Account
                                 <IonIcon slot="end" icon={arrowForwardCircleOutline} />
