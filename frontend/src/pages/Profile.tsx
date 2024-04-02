@@ -49,7 +49,7 @@ const Profile: React.FC = () => {
                         </IonButton>
                     </IonButtons>
                     <IonTitle className="ion-text-center">{profileDetails?.username}'s Profile</IonTitle>
-                    <IonText className="ion-margin-horizontal" slot='end'>Signed in</IonText>
+                    <IonText className="ion-margin-horizontal font-bold" slot='end'>Signed in</IonText>
                 </IonToolbar>
             </IonHeader>
             <IonContent>
