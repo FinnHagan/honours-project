@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { IonButton, IonCard, IonCardContent, IonContent, IonHeader, IonIcon, IonInput, IonPage, IonText, IonTitle, IonToolbar, useIonRouter } from '@ionic/react';
+import { IonButton, IonCard, IonCardContent, IonContent, IonHeader, IonIcon, IonInput, IonLoading, IonPage, IonText, IonTitle, IonToast, IonToolbar, useIonRouter } from '@ionic/react';
 import { arrowForwardCircleOutline, personCircleOutline, reloadSharp, eye, eyeOff } from 'ionicons/icons';
 import loginImage from '../assets/Login-screen-image.jpg';
 import Introduction from '../components/Introduction';
@@ -19,6 +19,8 @@ const Login: React.FC = () => {
         password: '',
     });
     const [formKey, setFormKey] = useState(Date.now()); //Ensure form is reset after submission
+    const [isLoading, setIsLoading] = useState(false);
+    const [showToast, setShowToast] = useState(false);
 
     useEffect(() => {
         const checkStorage = async () => {
@@ -38,11 +40,14 @@ const Login: React.FC = () => {
 
         setErrorMessages({ username: '', password: '' });
 
+        setIsLoading(true);
+
         try {
             const response = await axios.post(`${apiURL}/login/`, loginData, {
                 headers: { 'Content-Type': 'application/json' },
             });
             localStorage.setItem('token', response.data.key);
+            setShowToast(true);
             setFormKey(Date.now());
             router.push('/submissionPage');
         } catch (error: any) {
@@ -59,6 +64,9 @@ const Login: React.FC = () => {
                     password: errorMessage,
                 });
             }
+        } finally {
+            setIsLoading(false);
+            setTimeout(() => setShowToast(false), 3000);
         }
     };
 
@@ -91,6 +99,8 @@ const Login: React.FC = () => {
                                 <div>
                                     <img src={loginImage} alt="Login Page"></img>
                                 </div>
+                                <IonLoading isOpen={isLoading} message="Logging you in..." />
+                                <IonToast isOpen={showToast} onDidDismiss={() => setShowToast(false)} message="Successfully logged in!" color="success" duration={3000} />
                                 <form onSubmit={handleLogin} key={formKey}>
                                     <IonInput labelPlacement="floating" label="Username" type="text" placeholder="Username" name='username' required></IonInput>
                                     {errorMessages.username && <IonText color="danger"><sub>{errorMessages.username}</sub></IonText>}
