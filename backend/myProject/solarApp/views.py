@@ -1,6 +1,6 @@
 from rest_framework import generics
 from .models import Submission, ApplianceConsumption
-from .serializers import SubmissionSerializer, ChartDataSerializer
+from .serializers import SubmissionSerializer, ChartDataSerializer, UserProfileSerializer
 from rest_framework.views import APIView
 from rest_framework.response import Response
 import requests
@@ -20,6 +20,7 @@ from .serializers import UserSerializer
 from rest_framework.permissions import AllowAny
 from rest_framework.authtoken.models import Token
 from django.contrib.auth import authenticate
+from rest_framework.permissions import IsAuthenticated
 
 
 def get_lat_lon_from_post_code(post_code):
@@ -265,6 +266,7 @@ class SubmissionChartDataView(APIView):
 
 class CreateUserView(APIView):
     permission_classes = [AllowAny]
+
     def post(self, request, format='json'):
         serializer = UserSerializer(data=request.data)
         if serializer.is_valid():
@@ -272,7 +274,8 @@ class CreateUserView(APIView):
             if user:
                 return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    
+
+
 class LoginView(APIView):
     permission_classes = [AllowAny]
 
@@ -286,3 +289,11 @@ class LoginView(APIView):
             return Response({"token": token.key}, status=status.HTTP_200_OK)
         else:
             return Response({"non_field_errors": ["Username or password is incorrect."]}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class UserProfileView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, format=None):
+        serializer = UserProfileSerializer(request.user)
+        return Response(serializer.data)

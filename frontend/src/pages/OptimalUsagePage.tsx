@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { useParams } from 'react-router';
-import { IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonPage, IonTitle, IonToolbar } from '@ionic/react';
-import { arrowBack } from 'ionicons/icons';
+import { IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonPage, IonTitle, IonToolbar, useIonRouter } from '@ionic/react';
+import { homeOutline, personCircleOutline } from 'ionicons/icons';
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, Filler } from 'chart.js';
 import { Line } from 'react-chartjs-2';
 import { ChartOptions } from 'chart.js';
@@ -15,7 +15,6 @@ interface RouteParams {
     submissionId: string;
 }
 
-// Define MyChartData
 interface ChartDataset {
     label: string;
     data: Array<{ x: string; y: number }> | number[];
@@ -42,26 +41,14 @@ const OptimalUsagePage: React.FC = () => {
 
     const { submissionId } = useParams<RouteParams>();
     const [chartData, setChartData] = useState<MyChartData>({ labels: [], datasets: [] });
+    const router = useIonRouter();
 
-
-    const processApplianceConsumptionData = (appliance_name: string, applianceConsumptionData: any[]) => {
-        return applianceConsumptionData
-            .filter((item: { appliance_name: string; }) => item.appliance_name === appliance_name)
-            .map((item: { timestamp: any; consumption: any; }) => {
-                // Ensure the timestamp is parsed correctly
-                const dateTime = parseISO(`${new Date().toISOString().split('T')[0]}T${item.timestamp}`);
-                return {
-                    x: format(dateTime, 'HH:mm'), // Keep the exact timestamp
-                    y: item.consumption
-                };
-            });
-    };
     useEffect(() => {
         const token = localStorage.getItem('token');
         if (token) {
             axios.get(`${apiURL}/submission_chart_data/${submissionId}/`, {
                 headers: {
-                    'Authorization': `Token ${token}`, // Include the token in the request headers
+                    'Authorization': `Token ${token}`,
                 },
             }).then((response) => {
                 const { hourly_solar_production, appliance_consumption, wm_optimal_usage, td_optimal_usage } = response.data;
@@ -180,12 +167,16 @@ const OptimalUsagePage: React.FC = () => {
             <IonHeader>
                 <IonToolbar color="primary">
                     <IonButtons slot="start">
-                        <IonButton onClick={handleBack}>
-                            <IonIcon icon={arrowBack} />
-                            Back
+                        <IonButton onClick={(handleBack)}>
+                            <IonIcon icon={homeOutline} />
                         </IonButton>
                     </IonButtons>
-                    <IonTitle>Optimal Usage Chart</IonTitle>
+                    <IonTitle className='ion-text-center'>Optimal Usage Chart</IonTitle>
+                    <IonButtons slot="end">
+                        <IonButton onClick={() => router.push('/profile')}>
+                            <IonIcon icon={personCircleOutline} />
+                        </IonButton>
+                    </IonButtons>
                 </IonToolbar>
             </IonHeader>
             <IonContent>

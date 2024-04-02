@@ -78,10 +78,9 @@ const Register: React.FC = () => {
                     <IonButtons slot="start">
                         <IonButton onClick={handleBack}>
                             <IonIcon icon={arrowBack} />
-                            Back
                         </IonButton>
                     </IonButtons>
-                    <IonTitle>Register</IonTitle>
+                    <IonTitle className='ion-text-center'>Register Page</IonTitle>
                 </IonToolbar>
             </IonHeader>
 

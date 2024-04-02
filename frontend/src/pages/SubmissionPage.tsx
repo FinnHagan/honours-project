@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { IonButton, IonButtons, IonCard, IonCardContent, IonContent, IonHeader, IonInput, IonPage, IonTitle, IonToolbar, IonText, IonLoading, IonToast, IonCheckbox, IonRow, useIonRouter, IonIcon } from '@ionic/react';
 import axios from 'axios';
 import isValid from "uk-postcode-validator";
-import { arrowBack } from 'ionicons/icons';
+import { arrowBack, personCircleOutline } from 'ionicons/icons';
+import { useAuth } from '../contexts/AuthContext';
 
 const apiURL = "https://api.finnhagan.co.uk/api";
 // const apiURL = "http://127.0.0.1:8000/api";
@@ -76,7 +77,7 @@ const submitData = async (data: SubmissionData) => {
 const SubmissionPage: React.FC = () => {
 
     const handleBack = () => {
-        window.location.href = '/';
+        router.push('/');
     };
 
     const [formData, setFormData] = useState({
@@ -99,8 +100,15 @@ const SubmissionPage: React.FC = () => {
     const [isTumbleDryerSelected, setIsTumbleDryerSelected] = useState(false);
 
     const router = useIonRouter();
+    const { isAuthenticated } = useAuth(); // Destructure isAuthenticated from useAuth
 
     const [formKey, setFormKey] = useState(Date.now()); //Ensure form is reset after submission
+
+    useEffect(() => {
+        if (!isAuthenticated) {
+            router.push('/');
+        }
+    }, [isAuthenticated, router]);
 
 
     const handleSubmit = async (event: any) => {
@@ -229,10 +237,14 @@ const SubmissionPage: React.FC = () => {
                     <IonButtons slot="start">
                         <IonButton onClick={handleBack}>
                             <IonIcon icon={arrowBack} />
-                            Back
                         </IonButton>
                     </IonButtons>
-                    <IonTitle>Should I Put My Washing On?</IonTitle>
+                    <IonTitle className="ion-text-center">Should I Put My Washing On?</IonTitle>
+                    <IonButtons slot="end">
+                        <IonButton onClick={() => router.push('/profile')}>
+                            <IonIcon icon={personCircleOutline} />
+                        </IonButton>
+                    </IonButtons>
                 </IonToolbar>
             </IonHeader>
 

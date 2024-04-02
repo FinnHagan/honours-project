@@ -5,6 +5,7 @@ import loginImage from '../assets/Login-screen-image.jpg';
 import Introduction from '../components/Introduction';
 import { Preferences } from '@capacitor/preferences';
 import axios from 'axios';
+import { useAuth } from '../contexts/AuthContext';
 
 const INTRO_VIEWED = 'intro-viewed';
 const apiURL = "https://api.finnhagan.co.uk/api";
@@ -21,6 +22,7 @@ const Login: React.FC = () => {
     const [formKey, setFormKey] = useState(Date.now()); //Ensure form is reset after submission
     const [isLoading, setIsLoading] = useState(false);
     const [showToast, setShowToast] = useState(false);
+    const { login } = useAuth();
 
     useEffect(() => {
         const checkStorage = async () => {
@@ -39,14 +41,13 @@ const Login: React.FC = () => {
         };
 
         setErrorMessages({ username: '', password: '' });
-
         setIsLoading(true);
 
         try {
             const response = await axios.post(`${apiURL}/login/`, loginData, {
                 headers: { 'Content-Type': 'application/json' },
             });
-            localStorage.setItem('token', response.data.key);
+            login(response.data.key, { username: response.data.username, email: response.data.email });
             setShowToast(true);
             setFormKey(Date.now());
             router.push('/submissionPage');
@@ -71,7 +72,6 @@ const Login: React.FC = () => {
     };
 
     const introDone = () => {
-        console.log('Intro viewed');
         setIntroViewed(true);
         Preferences.set({ key: INTRO_VIEWED, value: 'true' });
     };
@@ -89,7 +89,7 @@ const Login: React.FC = () => {
                 <IonPage>
                     <IonHeader>
                         <IonToolbar color='primary'>
-                            <IonTitle>Should I Put My Washing On?</IonTitle>
+                            <IonTitle className='ion-text-center'>Should I Put My Washing On?</IonTitle>
                         </IonToolbar>
                     </IonHeader>
 

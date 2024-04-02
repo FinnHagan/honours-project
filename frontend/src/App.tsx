@@ -1,4 +1,4 @@
-import { Redirect, Route } from 'react-router-dom';
+import { Route } from 'react-router-dom';
 import { IonApp, IonRouterOutlet, setupIonicReact } from '@ionic/react';
 import { IonReactRouter } from '@ionic/react-router';
 import Login from './pages/Login';
@@ -24,22 +24,28 @@ import './theme/variables.css';
 import Register from './pages/Register';
 import SubmissionPage from './pages/SubmissionPage';
 import OptimalUsagePage from './pages/OptimalUsagePage';
+import Profile from './pages/Profile';
+import { AuthProvider } from './contexts/AuthContext';
 
 setupIonicReact();
 
 const App: React.FC = () => (
-  <IonApp>
-    <IonReactRouter>
-      <IonRouterOutlet>
-        <Route exact path="/">
-          <Login />
-        </Route>
-        <Route component={Register} path="/register" exact />
-        <Route component={SubmissionPage} path="/submissionPage" exact />
-        <Route component={OptimalUsagePage} path="/optimalUsagePage/:submissionId" exact />
-      </IonRouterOutlet>
-    </IonReactRouter>
-  </IonApp>
+  <AuthProvider>
+    <IonApp>
+      <IonReactRouter>
+        <IonRouterOutlet>
+          <Route exact path="/">
+            <Login />
+          </Route>
+          <Route component={Register} path="/register" exact />
+          <Route component={SubmissionPage} path="/submissionPage" exact />
+          <Route component={OptimalUsagePage} path="/optimalUsagePage/:submissionId" exact />
+          <Route component={Profile} path="/profile" exact />
+        </IonRouterOutlet>
+      </IonReactRouter>
+    </IonApp>
+  </AuthProvider>
+
 );
 
 export default App;

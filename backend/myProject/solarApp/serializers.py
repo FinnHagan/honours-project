@@ -36,7 +36,7 @@ class ChartDataSerializer(serializers.ModelSerializer):
 
     def get_appliance_consumption(self, obj):
         return obj.appliance_consumption if obj.appliance_consumption else []
-    
+
 
 class UserSerializer(serializers.ModelSerializer):
     confirm_password = serializers.CharField(write_only=True, required=True, validators=[validate_password])
@@ -53,9 +53,9 @@ class UserSerializer(serializers.ModelSerializer):
         if attrs['password'] != attrs.pop('confirm_password'):
             raise serializers.ValidationError({"password": "Password fields didn't match."})
         return attrs
-    
+
     def validate_email(self, value):
-        value = User.objects.normalize_email(value)        
+        value = User.objects.normalize_email(value)
         if User.objects.filter(email=value).exists():
             raise serializers.ValidationError("A user with that email already exists.")
         return value
@@ -67,3 +67,9 @@ class UserSerializer(serializers.ModelSerializer):
             validated_data['password']
         )
         return user
+
+
+class UserProfileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ('id', 'username', 'email')
