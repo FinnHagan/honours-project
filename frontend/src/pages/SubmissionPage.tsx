@@ -165,7 +165,6 @@ const SubmissionPage: React.FC = () => {
             setShowToast(true);
             setFormKey(Date.now());
             router.push(`/optimalUsagePage/${submissionId}/`);
-            setShowToast(true);
         } catch (error) {
             console.error("Error fetching weather or submitting data:", error);
         } finally {
@@ -182,6 +181,14 @@ const SubmissionPage: React.FC = () => {
                 [name]: value,
                 isValid: isValidPostcode, //Use isValid from Uk postcode validator to check if the postcode is valid
                 postCodeError: isValidPostcode ? '' : 'Invalid UK Postcode. Please try again.',
+            });
+        } else if (name === 'solarPanels') {
+            const parsedValue = parseInt(value, 10);
+            const valid = value === '' || (!isNaN(parsedValue) && parsedValue >= 1 && parsedValue <= 100);
+            setFormData({
+                ...formData,
+                solarPanels: valid ? value : formData.solarPanels,
+                solarPanelError: valid ? '' : "Please enter a valid number of solar panels (1-100).",
             });
         } else if (name === 'panelOrientation') {
             const parsedValue = parseFloat(value);

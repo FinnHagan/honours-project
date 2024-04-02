@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { IonButton, IonButtons, IonCard, IonCardContent, IonContent, IonHeader, IonIcon, IonInput, IonPage, IonText, IonTitle, IonToolbar, useIonAlert, useIonRouter } from '@ionic/react';
+import { IonButton, IonButtons, IonCard, IonCardContent, IonContent, IonHeader, IonIcon, IonInput, IonLoading, IonPage, IonText, IonTitle, IonToast, IonToolbar, useIonRouter } from '@ionic/react';
 import { arrowForwardCircleOutline, eyeOff, eye, arrowBack } from 'ionicons/icons';
 import axios from 'axios';
 
@@ -15,7 +15,6 @@ const Register: React.FC = () => {
     const router = useIonRouter();
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-    const [presentAlert] = useIonAlert();
     const [errorMessages, setErrorMessages] = useState({
         username: '',
         email: '',
@@ -23,6 +22,8 @@ const Register: React.FC = () => {
         confirm_password: '',
     });
     const [formKey, setFormKey] = useState(Date.now()); //Ensure form is reset after submission
+    const [isLoading, setIsLoading] = useState(false);
+    const [showToast, setShowToast] = useState(false);
 
     const handleRegister = async (event: any) => {
         event.preventDefault();
@@ -46,22 +47,16 @@ const Register: React.FC = () => {
             confirm_password,
         };
 
+        setIsLoading(true);
+
         try {
             await axios.post(`${apiURL}/register/`, userData, {
                 headers: { 'Content-Type': 'application/json' },
             });
-            // Redirect or show a success message
-            presentAlert({
-                header: 'Registration Successful',
-                message: 'You have successfully registered. You can now log in.',
-                buttons: [{
-                    text: 'OK',
-                    handler: () => {
-                        setFormKey(Date.now());
-                        router.push('/');
-                    }
-                }]
-            });
+            setShowToast(true);
+            setFormKey(Date.now());
+            router.push('/');
+
         } catch (error: any) {
             if (error.response && error.response.data) {
                 const errors = error.response.data;
@@ -69,6 +64,9 @@ const Register: React.FC = () => {
                     setErrorMessages(prevErrors => ({ ...prevErrors, [key]: errors[key].join(' ') }));
                 });
             }
+        } finally {
+            setIsLoading(false);
+            setTimeout(() => setShowToast(false), 3000);
         }
     };
 
@@ -91,6 +89,8 @@ const Register: React.FC = () => {
                 <IonCard>
                     <IonCardContent>
                         <form onSubmit={handleRegister} key={formKey}>
+                            <IonLoading isOpen={isLoading} message="Registering user... please wait" />
+                            <IonToast isOpen={showToast} onDidDismiss={() => setShowToast(false)} message="User successfully registered" color="success" duration={3000} />
                             <IonInput labelPlacement="floating" label="Username" type="text" placeholder="Username" name='username' required></IonInput>
                             {errorMessages.username && <IonText color="danger"><sub>{errorMessages.username}</sub></IonText>}
                             <IonInput className='ion-margin-top' labelPlacement="floating" label="Email" type="email" name='email' placeholder="uod@dundee.ac.uk" required></IonInput>
