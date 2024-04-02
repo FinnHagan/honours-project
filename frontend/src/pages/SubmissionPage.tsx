@@ -239,7 +239,7 @@ const SubmissionPage: React.FC = () => {
                             <IonIcon icon={arrowBack} />
                         </IonButton>
                     </IonButtons>
-                    <IonTitle className="ion-text-center">Should I Put My Washing On?</IonTitle>
+                    <IonTitle className="ion-text-center">Submission Details</IonTitle>
                     <IonButtons slot="end">
                         <IonButton onClick={() => router.push('/profile')}>
                             <IonIcon icon={personCircleOutline} />

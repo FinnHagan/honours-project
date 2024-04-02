@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { useParams } from 'react-router';
-import { IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonPage, IonTitle, IonToolbar, useIonRouter } from '@ionic/react';
+import { IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonPage, IonText, IonTitle, IonToolbar, useIonRouter } from '@ionic/react';
 import { homeOutline, personCircleOutline } from 'ionicons/icons';
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, Filler } from 'chart.js';
 import { Line } from 'react-chartjs-2';
@@ -172,11 +172,7 @@ const OptimalUsagePage: React.FC = () => {
                         </IonButton>
                     </IonButtons>
                     <IonTitle className='ion-text-center'>Optimal Usage Chart</IonTitle>
-                    <IonButtons slot="end">
-                        <IonButton onClick={() => router.push('/profile')}>
-                            <IonIcon icon={personCircleOutline} />
-                        </IonButton>
-                    </IonButtons>
+                    <IonText className="ion-margin-horizontal" slot='end'>Signed in</IonText>
                 </IonToolbar>
             </IonHeader>
             <IonContent>
