@@ -167,7 +167,7 @@ const OptimalUsagePage: React.FC = () => {
             <IonHeader>
                 <IonToolbar color="primary">
                     <IonButtons slot="start">
-                        <IonButton onClick={(handleBack)}>
+                        <IonButton onClick={handleBack}>
                             <IonIcon icon={homeOutline} />
                         </IonButton>
                     </IonButtons>
