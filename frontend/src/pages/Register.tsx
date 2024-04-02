@@ -80,7 +80,7 @@ const Register: React.FC = () => {
                             <IonIcon icon={arrowBack} />
                         </IonButton>
                     </IonButtons>
-                    <IonTitle className='ion-text-center'>Register Page</IonTitle>
+                    <IonTitle className='ion-text-center'>Registration Page</IonTitle>
                 </IonToolbar>
             </IonHeader>
 

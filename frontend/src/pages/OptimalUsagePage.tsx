@@ -161,7 +161,6 @@ const OptimalUsagePage: React.FC = () => {
 
     };
 
-
     return (
         <IonPage>
             <IonHeader>
@@ -172,7 +171,7 @@ const OptimalUsagePage: React.FC = () => {
                         </IonButton>
                     </IonButtons>
                     <IonTitle className='ion-text-center'>Optimal Usage Chart</IonTitle>
-                    <IonText className="ion-margin-horizontal" slot='end'>Signed in</IonText>
+                    <IonText className="ion-margin-horizontal font-bold" slot='end'>Signed in</IonText>
                 </IonToolbar>
             </IonHeader>
             <IonContent>
