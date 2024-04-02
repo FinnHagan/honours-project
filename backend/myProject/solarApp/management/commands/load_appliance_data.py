@@ -42,6 +42,4 @@ class Command(BaseCommand):
                 self.stdout.write(self.style.SUCCESS(f'Added new record for {record["appliance_name"]} at {record["timestamp"]}'))
             else:
                 self.stdout.write(self.style.WARNING(f'Record already exists for {record["appliance_name"]} at {record["timestamp"]}'))
-
-
                 self.stdout.write(self.style.SUCCESS('Successfully loaded appliance consumption data'))

@@ -22,7 +22,7 @@ const Introduction: React.FC<IntroductionProps> = ({ onIntroViewed }) => {
         <IonPage>
             <IonHeader>
                 <IonToolbar color='primary'>
-                    <IonTitle>Introduction</IonTitle>
+                    <IonTitle className='ion-text-center'>Introduction</IonTitle>
                 </IonToolbar>
             </IonHeader>
 

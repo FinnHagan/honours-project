@@ -35,6 +35,5 @@ class ApplianceConsumption(models.Model):
     class Meta:
         unique_together = ('appliance_name', 'timestamp',)
 
-
     def __str__(self):
         return f"{self.appliance_name} consumption at {self.timestamp}"

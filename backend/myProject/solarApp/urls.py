@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import SubmissionView, WeatherDataView, SolarDataView, SubmissionChartDataView, CreateUserView
+from .views import SubmissionView, WeatherDataView, SolarDataView, SubmissionChartDataView, CreateUserView, UserProfileView
 from dj_rest_auth.views import LoginView
 
 urlpatterns = [
@@ -9,4 +9,5 @@ urlpatterns = [
     path('submission_chart_data/<int:pk>/', SubmissionChartDataView.as_view(), name='submission_chart_data'),
     path('register/', CreateUserView.as_view(), name='createaccount'),
     path('login/', LoginView.as_view(), name='login'),
+    path('userprofile/', UserProfileView.as_view(), name='userprofile'),
 ]
