@@ -8,14 +8,14 @@
       "type": "image/x-icon"
     },
     {
-      "src": "src/assets/app-logo.jpg",
+      "src": "assets/app-logo.jpg",
       "type": "image/jpg",
       "sizes": "512x512",
       "purpose": "maskable"
     }
   ],
   "start_url": ".",
-  "display": "standalone",
+  "display": "full-screen",
   "theme_color": "#ffffff",
   "background_color": "#ffffff"
 }
