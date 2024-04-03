@@ -3,13 +3,13 @@
   "name": "Should I Put My Washing On?",
   "icons": [
     {
-      "src": "assets/icon/favicon.png",
+      "src": "/assets/favicon.png",
       "sizes": "64x64 32x32 24x24 16x16",
-      "type": "image/x-icon"
+      "type": "image/png"
     },
     {
-      "src": "assets/app-logo.jpg",
-      "type": "image/jpg",
+      "src": "/assets/app-logo.png",
+      "type": "image/png",
       "sizes": "512x512",
       "purpose": "maskable"
     }
