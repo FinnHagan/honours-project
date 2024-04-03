@@ -1,20 +1,22 @@
 import React, { useEffect, useState } from 'react';
-import { IonPage, IonHeader, IonToolbar, IonTitle, IonContent, IonCard, IonCardContent, IonLoading, IonButton, IonButtons, IonIcon, useIonRouter, IonItem, IonLabel, IonList, IonText, IonRow } from '@ionic/react';
+import { IonPage, IonHeader, IonToolbar, IonTitle, IonContent, IonCard, IonCardContent, IonLoading, IonButton, IonButtons, IonIcon, useIonRouter, IonText, IonRow, IonToast } from '@ionic/react';
 import { useAuth } from '../contexts/AuthContext';
 import axios from 'axios';
-import { homeOutline, logOutOutline, personCircleOutline } from 'ionicons/icons';
+import { homeOutline, logOutOutline } from 'ionicons/icons';
 
-const apiURL = "https://api.finnhagan.co.uk/api";
-// const apiURL = "http://127.0.0.1:8000/api";
+// const apiURL = "https://api.finnhagan.co.uk/api";
+const apiURL = "http://127.0.0.1:8000/api";
 
 const Profile: React.FC = () => {
     const router = useIonRouter();
     const { token, logout } = useAuth();
     const [isLoading, setIsLoading] = useState(false);
     const [profileDetails, setProfileDetails] = useState<any>(null);
+    const [showToast, setShowToast] = useState(false);
 
     const handleLogout = () => {
         logout();
+        setShowToast(true);
         router.push('/');
     };
 
@@ -63,6 +65,7 @@ const Profile: React.FC = () => {
                             Sign Out
                             <IonIcon slot="end" icon={logOutOutline} />
                         </IonButton>
+                        <IonToast isOpen={showToast} onDidDismiss={() => setShowToast(false)} message={profileDetails?.username + " Signed out"} color="success" duration={3000}></IonToast>
                     </IonCardContent>
                 </IonCard>
             </IonContent>
