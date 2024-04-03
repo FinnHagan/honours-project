@@ -27,7 +27,7 @@ import SubmissionPage from './pages/SubmissionPage';
 import OptimalUsagePage from './pages/OptimalUsagePage';
 import Profile from './pages/Profile';
 import { AuthProvider } from './contexts/AuthContext';
-import appLogo from './assets/app-logo.jpg';
+import appLogo from '../assets/Login-screen-image.jpg';
 
 setupIonicReact();
 
@@ -50,7 +50,6 @@ const App: React.FC = () => (
       </IonReactRouter>
     </IonApp>
   </AuthProvider>
-
 );
 
 export default App;
