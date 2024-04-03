@@ -20,7 +20,22 @@
   <!-- add to homescreen for ios -->
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-title" content="Should I Put My Washing On?" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="black" />
+  <!-- Default style, which uses the system default -->
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <!-- Translucent style, where the status bar floats on top of the full-screen content -->
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <link rel="apple-touch-icon" sizes="180x180" href="/assets/icons/apple-touch-icon-180.png">
+  <link rel="apple-touch-icon" sizes="192x192" href="/assets/icons/icon-192.png">
+
+  <style>
+    body {
+      /* Adjust padding to respect safe areas, fallback to 0 if var() not supported */
+      padding-top: env(safe-area-inset-top, 0);
+      padding-bottom: env(safe-area-inset-bottom, 0);
+      padding-left: env(safe-area-inset-left, 0);
+      padding-right: env(safe-area-inset-right, 0);
+    }
+  </style>
 </head>
 
 <body>
