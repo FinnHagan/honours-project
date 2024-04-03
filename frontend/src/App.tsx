@@ -27,7 +27,7 @@ import SubmissionPage from './pages/SubmissionPage';
 import OptimalUsagePage from './pages/OptimalUsagePage';
 import Profile from './pages/Profile';
 import { AuthProvider } from './contexts/AuthContext';
-import appLogo from '../assets/Login-screen-image.jpg';
+import appLogo from './assets/app-logo.png';
 
 setupIonicReact();
 
@@ -35,7 +35,7 @@ const App: React.FC = () => (
   <AuthProvider>
     <IonApp>
       <div style={{ display: 'none' }}>
-        <img src={require(appLogo)} alt="" />
+        <img src={appLogo} alt="" style={{ display: 'none' }} />
       </div>
       <IonReactRouter>
         <IonRouterOutlet>
