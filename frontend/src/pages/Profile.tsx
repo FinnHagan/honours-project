@@ -4,8 +4,8 @@ import { useAuth } from '../contexts/AuthContext';
 import axios from 'axios';
 import { homeOutline, logOutOutline } from 'ionicons/icons';
 
-// const apiURL = "https://api.finnhagan.co.uk/api";
-const apiURL = "http://127.0.0.1:8000/api";
+const apiURL = "https://api.finnhagan.co.uk/api";
+// const apiURL = "http://127.0.0.1:8000/api";
 
 const Profile: React.FC = () => {
     const router = useIonRouter();
