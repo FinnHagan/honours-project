@@ -81,132 +81,172 @@ class WeatherDataView(APIView):
 
 class SolarDataView(APIView):
     def post(self, request):
-        post_code = request.data.get('post_code')
-        datetime_str = request.data.get('date')
-        panel_orientation = float(request.data.get('panel_orientation'))
-        panel_tilt = float(request.data.get('panel_tilt'))
-        number_of_solar_panels = int(request.data.get('number_of_solar_panels'))
-        washing_machine_selected = request.data.get('washing_machine_selected')
-        tumble_dryer_selected = request.data.get('tumble_dryer_selected')
-        wm_optimal_usage = None  # If WM not selected, needs to be done so post goes through
-        td_optimal_usage = None  # If TD not selected, needs to be done so post goes through
-        hourly_solar_production = None
-
-        # Convert datetime string to actual datetime
-        input_date = datetime.strptime(datetime_str, '%Y-%m-%dT%H:%M')
-        input_date = input_date.replace(hour=0, minute=0)
-        utc_date = pytz.utc.localize(input_date)
-
-        # Fetch latitude and longitude from post code
-        lat, lon = get_lat_lon_from_post_code(post_code)
-        if lat is None or lon is None:
-            return Response({"error": "Failed to fetch latitude and longitude"}, status=400)
-
-        # Fetch solar data
         try:
-            ghi, dni, dhi = fetch_solar_data(lat, lon, panel_orientation, panel_tilt, utc_date)
+            post_code = request.data.get('post_code')
+            datetime_str = request.data.get('date')
+            panel_orientation = float(request.data.get('panel_orientation'))
+            panel_tilt = float(request.data.get('panel_tilt'))
+            number_of_solar_panels = int(request.data.get('number_of_solar_panels'))
+            washing_machine_selected = request.data.get('washing_machine_selected')
+            tumble_dryer_selected = request.data.get('tumble_dryer_selected')
+            wm_optimal_usage = request.data.get('wm_optimal_usage')
+            td_optimal_usage = request.data.get('td_optimal_usage')
+            hourly_solar_production = request.data.get('hourly_solar_production')
+
+            # Convert datetime string to actual datetime
+            input_date = datetime.strptime(datetime_str, '%Y-%m-%dT%H:%M')
+            input_date = input_date.replace(hour=0, minute=0)
+            utc_date = pytz.utc.localize(input_date)
+
+            # Fetch latitude and longitude from post code
+            lat, lon = get_lat_lon_from_post_code(post_code)
+            if lat is None or lon is None:
+                return Response({"error": "Failed to fetch latitude and longitude"}, status=400)
+
+            # Fetch solar data
+            try:
+                ghi, dni, dhi = fetch_solar_data(lat, lon, panel_orientation, panel_tilt, utc_date)
+            except Exception as e:
+                return Response({"error": str(e)}, status=500)
+
+            location = pvlib.location.Location(lat, lon, tz='UTC')
+            times = pd.date_range(start=input_date, periods=24, freq='1h', tz='UTC')
+            solar_position = location.get_solarposition(times=utc_date)
+
+            # Create a DataFrame for weather data
+            weather = pd.DataFrame({'ghi': ghi, 'dni': dni, 'dhi': dhi}, index=times)
+
+            # Initialize PV system and ModelChain
+            module_parameters = {'pdc0': 250, 'gamma_pdc': -0.004}
+            inverter_parameters = {'pdc0': 250, 'eta_inv_nom': 0.96}
+            temperature_model_parameters = TEMPERATURE_MODEL_PARAMETERS['sapm']['open_rack_glass_glass']
+            system = PVSystem(surface_tilt=panel_tilt, surface_azimuth=panel_orientation,
+                            module_parameters=module_parameters,
+                            inverter_parameters=inverter_parameters,
+                            temperature_model_parameters=temperature_model_parameters)
+
+            location = Location(lat, lon, tz='UTC')
+            mc = ModelChain(system, location, aoi_model='no_loss', spectral_model='no_loss',)
+
+            mc.run_model(weather)
+            ac_power = mc.results.ac * number_of_solar_panels
+            ac_power_df = pd.DataFrame({'production': ac_power.values}, index=times)
+            ac_power_df['hour'] = ac_power_df.index.hour
+            
+            optimal_hour = ac_power.idxmax()
+
+            # Fetch appliance consumption data
+            if washing_machine_selected:
+                wm_data = list(ApplianceConsumption.objects.filter(appliance_name="washing_machine").order_by('sequence').values('sequence', 'consumption'))
+            else:
+                wm_data = []
+
+            if tumble_dryer_selected:
+                td_data = list(ApplianceConsumption.objects.filter(appliance_name="tumble_dryer").order_by('sequence').values('sequence', 'consumption'))
+            else:
+                td_data = []
+
+            optimal_periods = self.calculate_optimal_periods(ac_power_df, wm_data, td_data)
+
+            # Update wm_optimal_usage and td_optimal_usage with actual computed values
+            wm_optimal_usage = optimal_periods.get('washing_machine')
+            td_optimal_usage = optimal_periods.get('tumble_dryer')
+
+            # Prepare hourly solar production for response
+            hourly_solar_production = [{"hour": hour.strftime('%H:%M'), "production": production}
+                                    for hour, production in ac_power.items()]
+            
+            # Fetch and prepare appliance consumption data for response
+            appliance_consumption = ApplianceConsumption.objects.filter(
+                appliance_name__in=["washing_machine", "tumble_dryer"]
+            ).order_by('sequence').values('appliance_name', 'sequence', 'consumption')
+
+            appliance_consumption_list = [{
+                "appliance_name": ac["appliance_name"],
+                "sequence": ac["sequence"],
+                "consumption": ac["consumption"]
+            } for ac in appliance_consumption]
+
+            return Response({
+                "solar_altitude": solar_position['apparent_elevation'].iloc[0],
+                "solar_azimuth": solar_position['azimuth'].iloc[0],
+                "daily_solar_output": ac_power.sum(),
+                "optimal_time": optimal_hour.strftime('%Y-%m-%d %H:%M'),
+                "optimal_power": ac_power.max(),
+                "wm_optimal_usage": wm_optimal_usage,
+                "td_optimal_usage": td_optimal_usage,
+                "hourly_solar_production": hourly_solar_production,
+                "appliance_consumption": appliance_consumption_list
+            })
+        
         except Exception as e:
-            return Response({"error": str(e)}, status=500)
+            # Log the exception and return a generic error response
+            print(f"Error in SolarDataView: {str(e)}")
+            return Response({"error": "An unexpected error occurred"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-        location = pvlib.location.Location(lat, lon, tz='UTC')
-        times = pd.date_range(start=input_date, periods=24, freq='1h', tz='UTC')
-        solar_position = location.get_solarposition(times=utc_date)
-
-        # Create a DataFrame for weather data
-        weather = pd.DataFrame({'ghi': ghi, 'dni': dni, 'dhi': dhi}, index=times)
-
-        # Initialize PV system and ModelChain
-        module_parameters = {'pdc0': 250, 'gamma_pdc': -0.004}
-        inverter_parameters = {'pdc0': 250, 'eta_inv_nom': 0.96}
-        temperature_model_parameters = TEMPERATURE_MODEL_PARAMETERS['sapm']['open_rack_glass_glass']
-        system = PVSystem(surface_tilt=panel_tilt, surface_azimuth=panel_orientation,
-                          module_parameters=module_parameters,
-                          inverter_parameters=inverter_parameters,
-                          temperature_model_parameters=temperature_model_parameters)
-
-        location = Location(lat, lon, tz='UTC')
-        mc = ModelChain(system, location, aoi_model='no_loss', spectral_model='no_loss',)
-
-        mc.run_model(weather)
-        # Calculate AC power output
-        ac_power = mc.results.ac * number_of_solar_panels
-
-        optimal_hour = ac_power.idxmax()
-
-        if washing_machine_selected:
-            wm_data = ApplianceConsumption.objects.filter(appliance_name="washing_machine").order_by('timestamp')
+    def calculate_optimal_periods(self, ac_power_df, wm_data, td_data):
+        optimal_start_times = {'washing_machine': None, 'tumble_dryer': None}
+        
+        # Determine WM's optimal start time
+        if wm_data:
+            wm_optimal_start = self.find_optimal_start_time(ac_power_df, wm_data)
+            if wm_optimal_start:
+                optimal_start_times['washing_machine'] = wm_optimal_start
+                # Adjust ac_power_df for WM consumption
+                ac_power_df_adjusted = self.adjust_power_for_appliance(ac_power_df, wm_data, wm_optimal_start)
+            else:
+                ac_power_df_adjusted = ac_power_df.copy()
         else:
-            wm_data = None
+            ac_power_df_adjusted = ac_power_df.copy()
 
-        if tumble_dryer_selected:
-            td_data = ApplianceConsumption.objects.filter(appliance_name="tumble_dryer").order_by('timestamp')
-        else:
-            td_data = None
+        # For TD, ensure start time consideration begins after WM cycle ends
+        if td_data and wm_optimal_start:
+            # Calculate the end of WM's cycle to start considering TD's optimal start
+            wm_end_time = pd.to_datetime(wm_optimal_start, utc=True) + pd.Timedelta(minutes=len(wm_data) * 10)
+            td_optimal_start = self.find_optimal_start_time(ac_power_df_adjusted[wm_end_time:], td_data)
+            if td_optimal_start:
+                optimal_start_times['tumble_dryer'] = td_optimal_start
 
-        if washing_machine_selected and wm_data:
-            wm_preferred_time = 'morning' if washing_machine_selected and tumble_dryer_selected else 'anytime'
-            wm_optimal_usage = self.calculate_optimal_periods(ac_power, wm_data, wm_preferred_time)
+        return optimal_start_times
 
-        if tumble_dryer_selected and td_data:
-            td_preferred_time = 'afternoon' if washing_machine_selected and tumble_dryer_selected else 'anytime'
-            td_optimal_usage = self.calculate_optimal_periods(ac_power, td_data, td_preferred_time)
 
-        hourly_solar_production = [
-            {"hour": hour.strftime('%H:%M'), "production": production}
-            for hour, production in ac_power.items()
-        ]
+    def find_optimal_start_time(self, ac_power_df, appliance_data):
+        optimal_start = None
+        max_solar_alignment = -1
+        cycle_duration = pd.Timedelta(minutes=len(appliance_data) * 10)  # 130 minutes
 
-        appliance_consumption = ApplianceConsumption.objects.filter(
-            appliance_name__in=["washing_machine", "tumble_dryer"]
-        ).order_by('timestamp').values('appliance_name', 'timestamp', 'consumption')
+        # Iterate through each possible start time in ac_power_df
+        for i, start_time in enumerate(ac_power_df.index[:-1]):  # Exclude the last time to ensure a full window
+            # Calculate the end time for this potential start
+            end_time = start_time + cycle_duration
+            # Ensure the end time does not exceed data range
+            if end_time > ac_power_df.index[-1]:
+                break
+            
+            # Calculate the sum of solar production for this time window
+            solar_sum = ac_power_df.loc[start_time:end_time]['production'].sum()
+            
+            if solar_sum > max_solar_alignment:
+                max_solar_alignment = solar_sum
+                optimal_start = start_time
 
-        # Prepare and format the response from the appliance consumption data
-        appliance_consumption_list = [{
-            "appliance_name": ac["appliance_name"],
-            "timestamp": ac["timestamp"].strftime("%H:%M"),  # Formatting time
-            "consumption": ac["consumption"]
-        } for ac in appliance_consumption]
+        return optimal_start.strftime('%H:%M') if optimal_start else None
 
-        return Response({
-            "solar_altitude": solar_position['apparent_elevation'].iloc[0],
-            "solar_azimuth": solar_position['azimuth'].iloc[0],
-            "daily_solar_output": ac_power.sum(),
-            "optimal_time": optimal_hour.strftime('%Y-%m-%d %H:%M'),
-            "optimal_power": ac_power.max(),
-            "wm_optimal_usage": wm_optimal_usage,
-            "td_optimal_usage": td_optimal_usage,
-            "hourly_solar_production": hourly_solar_production,
-            "appliance_consumption": appliance_consumption_list
-        })
 
-    def calculate_optimal_periods(self, ac_power, appliance_data, preferred_time):
-        preferred_hours = {
-            'morning': range(6, 13),
-            'afternoon': range(13, 20),
-            'evening': range(20, 24),
-            'anytime': range(6, 24)  # Anytime during potential sunlight hours
-        }
 
-        hours = preferred_hours.get(preferred_time, range(6, 24))
-        hours_list = list(hours)
-
-        # Convert ac_power to DataFrame for easier manipulation
-        ac_power_df = ac_power.to_frame(name='production')
-        ac_power_df['hour'] = ac_power_df.index.hour
-
-        # Only consider times where there is solar production
-        solar_production_hours = ac_power_df[ac_power_df['production'] > 0]
-
-        optimal_times_list = []
-        preferred_times_df = solar_production_hours[solar_production_hours['hour'].isin(hours_list)].copy()
-
-        total_consumption = appliance_data.aggregate(total=Sum('consumption'))['total']
-
-        preferred_times_df['net_production'] = preferred_times_df['production'] - total_consumption
-        preferred_times_df = preferred_times_df.sort_values(by='net_production', ascending=False)
-        optimal_times_list.extend(preferred_times_df.index.strftime('%Y-%m-%d %H:%M').tolist())
-
-        return optimal_times_list if optimal_times_list else ["No optimal time found within solar production constraints."]
+    def adjust_power_for_appliance(self, ac_power_df, appliance_data, start_time_str):
+        adjusted_power_df = ac_power_df.copy()
+        start_time = pd.to_datetime(start_time_str).tz_localize('UTC')
+        cycle_duration_minutes = len(appliance_data) * 10  # 130 minutes for 13 sequences
+        
+        for i in range(cycle_duration_minutes // 10):  # Data is in 10-minute intervals
+            time = start_time + pd.Timedelta(minutes=i*10)
+            if time not in adjusted_power_df.index:
+                continue
+            # Uniform consumption for simplicity; will adjust based on actual data if can
+            adjusted_power_df.loc[time, 'production'] -= sum([d['consumption'] for d in appliance_data]) / len(appliance_data)
+        
+        return adjusted_power_df
 
 
 class SubmissionView(generics.CreateAPIView):
