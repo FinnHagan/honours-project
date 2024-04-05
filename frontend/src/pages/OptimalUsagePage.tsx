@@ -8,8 +8,8 @@ import { Line } from 'react-chartjs-2';
 import { ChartOptions } from 'chart.js';
 import { addMinutes, format, parseISO } from 'date-fns';
 
-const apiURL = "http://127.0.0.1:8000/api";
-// const apiURL = "https://api.finnhagan.co.uk/api";
+// const apiURL = "http://127.0.0.1:8000/api";
+const apiURL = "https://api.finnhagan.co.uk/api";
 
 interface RouteParams {
     submissionId: string;
