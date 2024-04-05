@@ -2,14 +2,14 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { useParams } from 'react-router';
 import { IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonPage, IonText, IonTitle, IonToolbar, useIonRouter } from '@ionic/react';
-import { homeOutline, personCircleOutline } from 'ionicons/icons';
+import { homeOutline } from 'ionicons/icons';
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, Filler } from 'chart.js';
 import { Line } from 'react-chartjs-2';
 import { ChartOptions } from 'chart.js';
-import { format, parseISO } from 'date-fns';
+import { addMinutes, format, parseISO } from 'date-fns';
 
-// const apiURL = "http://127.0.0.1:8000/api";
-const apiURL = "https://api.finnhagan.co.uk/api";
+const apiURL = "http://127.0.0.1:8000/api";
+// const apiURL = "https://api.finnhagan.co.uk/api";
 
 interface RouteParams {
     submissionId: string;
@@ -41,7 +41,6 @@ const OptimalUsagePage: React.FC = () => {
 
     const { submissionId } = useParams<RouteParams>();
     const [chartData, setChartData] = useState<MyChartData>({ labels: [], datasets: [] });
-    const router = useIonRouter();
 
     useEffect(() => {
         const token = localStorage.getItem('token');
@@ -53,64 +52,51 @@ const OptimalUsagePage: React.FC = () => {
             }).then((response) => {
                 const { hourly_solar_production, appliance_consumption, wm_optimal_usage, td_optimal_usage } = response.data;
 
-                // Prepare the solar production data for the chart
                 const solar_production_data = hourly_solar_production.map((item: { hour: any; production: any; }) => ({
                     x: format(parseISO(`${new Date().toISOString().split('T')[0]}T${item.hour}:00`), 'HH:mm'),
                     y: item.production,
                 }));
 
-                // Filter the appliance consumption data based on user selection
-                const filteredApplianceConsumption = appliance_consumption.filter((item: { appliance_name: string; }) =>
-                    (wm_optimal_usage.length > 0 && item.appliance_name === 'washing_machine') ||
-                    (td_optimal_usage.length > 0 && item.appliance_name === 'tumble_dryer')
-                );
+                // Generate timestamps for appliance usage starting from their optimal usage times
+                const generateApplianceData = (optimalUsageTime: string, applianceName: string) => {
+                    const startDateTime = parseISO(`${new Date().toISOString().split('T')[0]}T${optimalUsageTime}`);
+                    return appliance_consumption
+                        .filter((item: any) => item.appliance_name === applianceName)
+                        .map((item: any, index: number) => ({
+                            x: format(addMinutes(startDateTime, index * 10), 'HH:mm'),
+                            y: item.consumption,
+                        }));
+                };
 
-                // Map the filtered appliance consumption data
-                const applianceConsumptionData = filteredApplianceConsumption.map((item: { timestamp: any; consumption: any; }) => ({
-                    x: format(parseISO(`${new Date().toISOString().split('T')[0]}T${item.timestamp}`), 'HH:mm'),
-                    y: item.consumption,
-                }));
-
-                // Combine timestamps from both solar production and appliance consumption to ensure all data overlaps correctly
-                const allTimestamps = new Set([
-                    ...solar_production_data.map((data: { x: any; }) => data.x),
-                    ...applianceConsumptionData.map((data: { x: any; }) => data.x),
-                ]);
-                const labels = Array.from(allTimestamps).sort((a, b) => (a > b ? 1 : -1));
-
-                // Initialize datasets with solar production data
-                let datasets = [
+                // Create datasets for washing machine and tumble dryer based on their optimal usage times
+                const datasets: ChartDataset[] = [
                     {
                         label: 'Solar Production (Wh)',
                         data: solar_production_data,
                         borderColor: 'rgb(255, 205, 86)',
                         backgroundColor: 'rgba(255, 205, 86, 0.5)',
-                        type: 'line' as 'line',
+                        type: 'line',
                         fill: true,
-                    }
-                ];
-
-                // Dynamically add appliance consumption data to the datasets based on user selection
-                if (wm_optimal_usage.length > 0) {
-                    datasets.push({
+                    },
+                    {
                         label: 'Washing Machine Consumption (Wh)',
-                        data: applianceConsumptionData.filter((d: { x: any; }) => appliance_consumption.find((ac: { timestamp: any; appliance_name: string; }) => ac.timestamp === d.x && ac.appliance_name === 'washing_machine')),
+                        data: generateApplianceData(wm_optimal_usage, 'washing_machine'),
                         borderColor: 'rgb(54, 162, 235)',
                         backgroundColor: 'rgba(54, 162, 235, 0.5)',
-                        type: 'line',
                         fill: false,
-                    });
-                }
-                if (td_optimal_usage.length > 0) {
-                    datasets.push({
+                    },
+                    {
                         label: 'Tumble Dryer Consumption (Wh)',
-                        data: applianceConsumptionData.filter((d: { x: any; }) => appliance_consumption.find((ac: { timestamp: any; appliance_name: string; }) => ac.timestamp === d.x && ac.appliance_name === 'tumble_dryer')),
+                        data: generateApplianceData(td_optimal_usage, 'tumble_dryer'),
                         borderColor: 'rgb(255, 99, 132)',
                         backgroundColor: 'rgba(255, 99, 132, 0.5)',
-                        type: 'line',
                         fill: false,
-                    });
-                }
+                    },
+                ];
+
+                // Extract all timestamps from datasets for labels
+                const allTimestamps = new Set(datasets.flatMap(dataset => dataset.data.map((d: any) => d.x)));
+                const labels = Array.from(allTimestamps).sort();
 
                 setChartData({
                     labels,
@@ -121,9 +107,6 @@ const OptimalUsagePage: React.FC = () => {
             });
         }
     }, [submissionId]);
-
-
-
 
     const options: ChartOptions<'line'> = {
         responsive: true,
