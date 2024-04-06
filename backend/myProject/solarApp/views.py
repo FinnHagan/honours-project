@@ -14,7 +14,6 @@ import pvlib.irradiance
 import pandas as pd
 from datetime import datetime
 import pytz
-from django.db.models import Sum
 from rest_framework import status
 from .serializers import UserSerializer
 from rest_framework.permissions import AllowAny
@@ -132,7 +131,7 @@ class SolarDataView(APIView):
             ac_power = mc.results.ac * number_of_solar_panels
             ac_power_df = pd.DataFrame({'production': ac_power.values}, index=times)
             ac_power_df['hour'] = ac_power_df.index.hour
-            
+
             optimal_hour = ac_power.idxmax()
 
             # Fetch appliance consumption data
@@ -148,14 +147,12 @@ class SolarDataView(APIView):
 
             optimal_periods = self.calculate_optimal_periods(ac_power_df, wm_data, td_data)
 
-            # Update wm_optimal_usage and td_optimal_usage with actual computed values
             wm_optimal_usage = optimal_periods.get('washing_machine')
             td_optimal_usage = optimal_periods.get('tumble_dryer')
 
             # Prepare hourly solar production for response
             hourly_solar_production = [{"hour": hour.strftime('%H:%M'), "production": production}
-                                    for hour, production in ac_power.items()]
-            
+            for hour, production in ac_power.items()]
             # Fetch and prepare appliance consumption data for response
             appliance_consumption = ApplianceConsumption.objects.filter(
                 appliance_name__in=["washing_machine", "tumble_dryer"]
@@ -165,7 +162,7 @@ class SolarDataView(APIView):
                 "appliance_name": ac["appliance_name"],
                 "sequence": ac["sequence"],
                 "consumption": ac["consumption"]
-            } for ac in appliance_consumption]
+            } for ac in appliance_consumption if (ac["appliance_name"] == "washing_machine" and washing_machine_selected) or (ac["appliance_name"] == "tumble_dryer" and tumble_dryer_selected)]  # Ensure only selected appliances are included
 
             return Response({
                 "solar_altitude": solar_position['apparent_elevation'].iloc[0],
@@ -173,42 +170,43 @@ class SolarDataView(APIView):
                 "daily_solar_output": ac_power.sum(),
                 "optimal_time": optimal_hour.strftime('%Y-%m-%d %H:%M'),
                 "optimal_power": ac_power.max(),
-                "wm_optimal_usage": wm_optimal_usage,
-                "td_optimal_usage": td_optimal_usage,
+                "wm_optimal_usage": wm_optimal_usage if wm_optimal_usage else None,
+                "td_optimal_usage": td_optimal_usage if td_optimal_usage else None,
                 "hourly_solar_production": hourly_solar_production,
                 "appliance_consumption": appliance_consumption_list
             })
-        
+
         except Exception as e:
             # Log the exception and return a generic error response
             print(f"Error in SolarDataView: {str(e)}")
             return Response({"error": "An unexpected error occurred"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     def calculate_optimal_periods(self, ac_power_df, wm_data, td_data):
-        optimal_start_times = {'washing_machine': None, 'tumble_dryer': None}
-        
-        # Determine WM's optimal start time
-        if wm_data:
+        optimal_start_times = {}
+        # When only one appliance is selected, use the absolute optimal start based on solar production
+        unadjusted_optimal_start = ac_power_df['production'].idxmax().strftime('%H:%M')
+
+        if wm_data and not td_data:
+            optimal_start_times['washing_machine'] = unadjusted_optimal_start
+        elif td_data and not wm_data:
+            optimal_start_times['tumble_dryer'] = unadjusted_optimal_start
+
+        if wm_data and td_data:
             wm_optimal_start = self.find_optimal_start_time(ac_power_df, wm_data)
             if wm_optimal_start:
                 optimal_start_times['washing_machine'] = wm_optimal_start
-                # Adjust ac_power_df for WM consumption
+                # Calculate end time of the washing machine cycle
+                wm_end_time = pd.to_datetime(wm_optimal_start, utc=True) + pd.Timedelta(minutes=len(wm_data) * 10)
+                # Adjust ac_power_df for washing machine's consumption
                 ac_power_df_adjusted = self.adjust_power_for_appliance(ac_power_df, wm_data, wm_optimal_start)
-            else:
-                ac_power_df_adjusted = ac_power_df.copy()
-        else:
-            ac_power_df_adjusted = ac_power_df.copy()
+                # Filter ac_power_df_adjusted to start from just after the end of the washing machine's cycle
+                ac_power_df_for_td = ac_power_df_adjusted[ac_power_df_adjusted.index > wm_end_time]
 
-        # For TD, ensure start time consideration begins after WM cycle ends
-        if td_data and wm_optimal_start:
-            # Calculate the end of WM's cycle to start considering TD's optimal start
-            wm_end_time = pd.to_datetime(wm_optimal_start, utc=True) + pd.Timedelta(minutes=len(wm_data) * 10)
-            td_optimal_start = self.find_optimal_start_time(ac_power_df_adjusted[wm_end_time:], td_data)
-            if td_optimal_start:
-                optimal_start_times['tumble_dryer'] = td_optimal_start
+                td_optimal_start = self.find_optimal_start_time(ac_power_df_for_td, td_data)
+                if td_optimal_start:
+                    optimal_start_times['tumble_dryer'] = td_optimal_start
 
         return optimal_start_times
-
 
     def find_optimal_start_time(self, ac_power_df, appliance_data):
         optimal_start = None
@@ -222,30 +220,27 @@ class SolarDataView(APIView):
             # Ensure the end time does not exceed data range
             if end_time > ac_power_df.index[-1]:
                 break
-            
+
             # Calculate the sum of solar production for this time window
             solar_sum = ac_power_df.loc[start_time:end_time]['production'].sum()
-            
+
             if solar_sum > max_solar_alignment:
                 max_solar_alignment = solar_sum
                 optimal_start = start_time
 
         return optimal_start.strftime('%H:%M') if optimal_start else None
 
-
-
     def adjust_power_for_appliance(self, ac_power_df, appliance_data, start_time_str):
         adjusted_power_df = ac_power_df.copy()
         start_time = pd.to_datetime(start_time_str).tz_localize('UTC')
-        cycle_duration_minutes = len(appliance_data) * 10  # 130 minutes for 13 sequences
-        
-        for i in range(cycle_duration_minutes // 10):  # Data is in 10-minute intervals
-            time = start_time + pd.Timedelta(minutes=i*10)
-            if time not in adjusted_power_df.index:
-                continue
-            # Uniform consumption for simplicity; will adjust based on actual data if can
-            adjusted_power_df.loc[time, 'production'] -= sum([d['consumption'] for d in appliance_data]) / len(appliance_data)
-        
+
+        for appliance_entry in appliance_data:
+            # Find the corresponding time slot in adjusted_power_df for each entry in appliance_data
+            time_slot = start_time + pd.Timedelta(minutes=(appliance_entry['sequence'] - 1) * 10)
+            if time_slot in adjusted_power_df.index:
+                # Subtract the appliance's consumption from the solar production at this time slot
+                adjusted_power_df.loc[time_slot, 'production'] -= appliance_entry['consumption']
+
         return adjusted_power_df
 
 

@@ -31,7 +31,6 @@ class ApplianceConsumption(models.Model):
     appliance_name = models.CharField(max_length=50)
     sequence = models.IntegerField()
     consumption = models.FloatField()
-    
 
     class Meta:
         unique_together = ('appliance_name', 'sequence',)
