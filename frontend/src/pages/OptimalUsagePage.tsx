@@ -68,31 +68,36 @@ const OptimalUsagePage: React.FC = () => {
                         }));
                 };
 
-                // Create datasets for washing machine and tumble dryer based on their optimal usage times
-                const datasets: ChartDataset[] = [
-                    {
-                        label: 'Solar Production (Wh)',
-                        data: solar_production_data,
-                        borderColor: 'rgb(255, 205, 86)',
-                        backgroundColor: 'rgba(255, 205, 86, 0.5)',
-                        type: 'line',
-                        fill: true,
-                    },
-                    {
+                // Initialize datasets with solar production data
+                const datasets: ChartDataset[] = [{
+                    label: 'Solar Production (Wh)',
+                    data: solar_production_data,
+                    borderColor: 'rgb(255, 205, 86)',
+                    backgroundColor: 'rgba(255, 205, 86, 0.5)',
+                    fill: true,
+                }];
+
+                // Conditionally add washing machine and tumble dryer data
+                if (wm_optimal_usage && wm_optimal_usage.length > 0) {
+                    datasets.push({
                         label: 'Washing Machine Consumption (Wh)',
                         data: generateApplianceData(wm_optimal_usage, 'washing_machine'),
                         borderColor: 'rgb(54, 162, 235)',
                         backgroundColor: 'rgba(54, 162, 235, 0.5)',
                         fill: false,
-                    },
-                    {
+                    });
+                }
+
+                if (td_optimal_usage && td_optimal_usage.length > 0) {
+                    datasets.push({
                         label: 'Tumble Dryer Consumption (Wh)',
                         data: generateApplianceData(td_optimal_usage, 'tumble_dryer'),
                         borderColor: 'rgb(255, 99, 132)',
                         backgroundColor: 'rgba(255, 99, 132, 0.5)',
                         fill: false,
-                    },
-                ];
+                    });
+                }
+
 
                 // Extract all timestamps from datasets for labels
                 const allTimestamps = new Set(datasets.flatMap(dataset => dataset.data.map((d: any) => d.x)));
