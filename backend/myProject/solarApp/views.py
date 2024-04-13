@@ -20,6 +20,7 @@ from rest_framework.permissions import AllowAny
 from rest_framework.authtoken.models import Token
 from django.contrib.auth import authenticate
 from rest_framework.permissions import IsAuthenticated
+import pandas as pd
 
 
 def get_lat_lon_from_post_code(post_code):
@@ -193,33 +194,47 @@ class SolarDataView(APIView):
 
         if wm_data and td_data:
             wm_optimal_start = self.find_optimal_start_time(ac_power_df, wm_data)
-            if wm_optimal_start:
-                optimal_start_times['washing_machine'] = wm_optimal_start
-                # Calculate end time of the washing machine cycle
-                wm_end_time = pd.to_datetime(wm_optimal_start, utc=True) + pd.Timedelta(minutes=len(wm_data) * 10)
-                # Adjust ac_power_df for washing machine's consumption
-                ac_power_df_adjusted = self.adjust_power_for_appliance(ac_power_df, wm_data, wm_optimal_start)
-                # Filter ac_power_df_adjusted to start from just after the end of the washing machine's cycle
-                ac_power_df_for_td = ac_power_df_adjusted[ac_power_df_adjusted.index > wm_end_time]
+            td_optimal_start = self.find_optimal_start_time(ac_power_df, td_data)
 
-                td_optimal_start = self.find_optimal_start_time(ac_power_df_for_td, td_data)
-                if td_optimal_start:
-                    optimal_start_times['tumble_dryer'] = td_optimal_start
+            # Calculate end time of the washing machine cycle
+            wm_end_time = pd.to_datetime(wm_optimal_start, utc=True) + pd.Timedelta(minutes=len(wm_data) * 10)
+
+            if wm_optimal_start == td_optimal_start:  # If initial times are the same
+                # Adjust TD start time to start after WM ends
+                adjusted_start_time = wm_end_time
+                while adjusted_start_time < ac_power_df.index[-1]:
+                    if self.is_time_available(ac_power_df, adjusted_start_time, td_data):
+                        td_optimal_start = adjusted_start_time.strftime('%H:%M')
+                        break
+                    adjusted_start_time += pd.Timedelta(minutes=10)  # Check next available slot
+                else:
+                    # Fallback to any non-overlapping time if no suitable time is found
+                    td_optimal_start = (wm_end_time + pd.Timedelta(minutes=10)).strftime('%H:%M')
+
+            optimal_start_times['washing_machine'] = wm_optimal_start
+            optimal_start_times['tumble_dryer'] = td_optimal_start
 
         return optimal_start_times
+
+    def is_time_available(self, ac_power_df, start_time, appliance_data):
+        # Check if the given start_time for the duration of appliance_data does not overlap with high consumption or is out of index bounds
+        end_time = start_time + pd.Timedelta(minutes=len(appliance_data) * 10)
+        if end_time > ac_power_df.index[-1]:
+            return False
+        return True  # Consider more conditions as necessary
 
     def find_optimal_start_time(self, ac_power_df, appliance_data):
         optimal_start = None
         max_solar_alignment = -1
-        cycle_duration = pd.Timedelta(minutes=len(appliance_data) * 10)  # 130 minutes
+        cycle_duration = pd.Timedelta(minutes=len(appliance_data) * 10) # 130 minutes
 
-        # Iterate through each possible start time in ac_power_df
+        # Iterate through each possible start time in ac_power_df        
         for i, start_time in enumerate(ac_power_df.index[:-1]):  # Exclude the last time to ensure a full window
             # Calculate the end time for this potential start
             end_time = start_time + cycle_duration
             # Ensure the end time does not exceed data range
             if end_time > ac_power_df.index[-1]:
-                break
+                continue
 
             # Calculate the sum of solar production for this time window
             solar_sum = ac_power_df.loc[start_time:end_time]['production'].sum()
@@ -232,7 +247,7 @@ class SolarDataView(APIView):
 
     def adjust_power_for_appliance(self, ac_power_df, appliance_data, start_time_str):
         adjusted_power_df = ac_power_df.copy()
-        start_time = pd.to_datetime(start_time_str).tz_localize('UTC')
+        start_time = pd.to_datetime(start_time_str, utc=True)
 
         for appliance_entry in appliance_data:
             # Find the corresponding time slot in adjusted_power_df for each entry in appliance_data
